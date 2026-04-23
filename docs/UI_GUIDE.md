@@ -1,76 +1,208 @@
 # UI 디자인 가이드
 
 ## 디자인 원칙
-1. {원칙 1 — 예: "도구처럼 보여야 한다. 마케팅 페이지가 아니라 매일 쓰는 대시보드."}
-2. {원칙 2}
-3. {원칙 3}
+1. 매일 쓰는 교환일기처럼 보여야 한다. 마케팅 페이지가 아니라 오늘의 질문을 바로 마주하는 앱이어야 한다.
+2. 감성은 문장과 여백에서 만들고, 장식으로 과장하지 않는다.
+3. 답변 잠금, 공개, 선택, 주문 신청, 미리보기, 주문 완료 상태가 한눈에 이해되어야 한다.
+4. 커플의 사적인 기록을 다루므로 차분하고 신뢰감 있는 화면을 유지한다.
 
-## AI 슬롭 안티패턴 — 하지 마라
+## 사용자-facing 용어
+| 내부/개발 용어 | 사용자-facing 문구 |
+|----------------|-------------------|
+| export | 주문 |
+| export item | 선택한 기록 |
+| export preview | 주문 미리보기 |
+| export complete | 주문 완료 |
+| download json | JSON 다운로드 |
+| download text | 텍스트 다운로드 |
+
+- 화면 제목, 버튼, 안내 문구에서는 export라는 단어를 쓰지 않는다.
+- API path, 코드, 파일명에서는 export 용어를 유지할 수 있다.
+- "주문"은 MVP에서 결제나 실물 제작이 아니라 다운로드 가능한 기록 묶음 생성임을 화면 흐름으로 오해 없이 전달한다.
+
+## AI 슬롭 안티패턴 - 하지 마라
 | 금지 사항 | 이유 |
 |-----------|------|
-| backdrop-filter: blur() | glass morphism은 AI 템플릿의 가장 흔한 징후 |
-| gradient-text (배경 그라데이션 텍스트) | AI가 만든 SaaS 랜딩의 1번 특징 |
-| "Powered by AI" 배지 | 기능이 아니라 장식. 사용자에게 가치 없음 |
-| box-shadow 글로우 애니메이션 | 네온 글로우 = AI 슬롭 |
-| 보라/인디고 브랜드 색상 | "AI = 보라색" 클리셰 |
-| 모든 카드에 동일한 rounded-2xl | 균일한 둥근 모서리는 템플릿 느낌 |
-| 배경 gradient orb (blur-3xl 원형) | 모든 AI 랜딩 페이지에 있는 장식 |
+| backdrop-filter: blur() 중심의 glass morphism | 사적인 기록장보다 템플릿 SaaS처럼 보인다 |
+| gradient-text | 제품의 감정보다 장식이 먼저 보인다 |
+| "Powered by AI" 배지 | MVP는 런타임 AI 기능을 제공하지 않는다 |
+| box-shadow 글로우 애니메이션 | 일기 앱의 조용한 분위기와 맞지 않는다 |
+| 보라/인디고 브랜드 색상 남용 | AI 서비스 클리셰처럼 보인다 |
+| 모든 카드에 동일한 rounded-2xl | 화면이 템플릿처럼 납작해진다 |
+| 배경 gradient orb | 기록과 답변에 집중해야 할 시선을 빼앗는다 |
 
 ## 색상
 ### 배경
 | 용도 | 값 |
 |------|------|
-| 페이지 | {예: #0a0a0a} |
-| 카드 | {예: #141414} |
+| 페이지 | bg-stone-50 |
+| 섹션 | bg-white |
+| 카드 | bg-white border border-stone-200 |
+| 잠금 영역 | bg-stone-100 border border-stone-200 |
 
 ### 텍스트
 | 용도 | 값 |
 |------|------|
-| 주 텍스트 | {예: text-white} |
-| 본문 | {예: text-neutral-300} |
-| 보조 | {예: text-neutral-400} |
-| 비활성 | {예: text-neutral-500} |
+| 주 텍스트 | text-stone-950 |
+| 본문 | text-stone-700 |
+| 보조 | text-stone-500 |
+| 비활성 | text-stone-400 |
 
 ### 데이터/시맨틱 색상
 | 용도 | 값 |
 |------|------|
-| {긍정/성공} | {예: #22c55e} |
-| {부정/에러} | {예: #ef4444} |
-| {중립/기본} | {예: #525252} |
+| 작성 완료 | text-emerald-700 bg-emerald-50 border-emerald-200 |
+| 대기/잠금 | text-stone-600 bg-stone-100 border-stone-200 |
+| 에러 | text-red-700 bg-red-50 border-red-200 |
+| 선택됨 | text-rose-800 bg-rose-50 border-rose-200 |
+| 주문 진행 | text-amber-800 bg-amber-50 border-amber-200 |
+| 주요 액션 | bg-rose-700 text-white hover:bg-rose-800 |
 
 ## 컴포넌트
 ### 카드
+```text
+rounded-lg bg-white border border-stone-200 p-5
 ```
-{예: rounded-lg bg-[#141414] border border-neutral-800 p-6}
-```
+- 카드 안에 또 다른 카드 형태의 큰 박스를 중첩하지 않는다.
+- 질문 카드, 답변 카드, 기록 항목처럼 정보 묶음이 분명할 때만 사용한다.
 
 ### 버튼
-```
-Primary: {예: rounded-lg bg-white text-black hover:bg-neutral-200}
-Text:    {예: text-neutral-500 hover:text-neutral-300}
+```text
+Primary:   rounded-md bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-800
+Secondary: rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50
+Text:      text-sm font-medium text-stone-500 hover:text-stone-900
+Danger:    rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800
 ```
 
 ### 입력 필드
-```
-{예: rounded-lg bg-neutral-900 border border-neutral-800 px-4 py-3}
+```text
+rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-950 placeholder:text-stone-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-100
 ```
 
+### 상태 배지
+```text
+rounded-full border px-2.5 py-1 text-xs font-medium
+```
+- 작성 완료, 대기 중, 잠금, 공개됨, 선택됨 상태를 구분한다.
+- 배지는 짧은 한국어 문구를 사용한다. 예: 작성 완료, 상대 대기, 공개됨.
+- 상태는 색상만으로 구분하지 않고 항상 텍스트를 함께 제공한다.
+
+## 상태별 문구
+| 상태 | 기본 문구 |
+|------|----------|
+| NOT_ANSWERED | 오늘의 답변을 남겨보세요. |
+| MY_ANSWERED_PARTNER_WAITING | 내 답변은 저장됐어요. 상대가 답하면 함께 열려요. |
+| PARTNER_ANSWERED_ME_WAITING | 상대가 답변을 마쳤어요. 내 답변을 남기면 함께 열려요. |
+| BOTH_ANSWERED | 두 사람의 답변이 열렸어요. |
+| LOCKED | 상대가 답하면 열려요. |
+| NO_DIARY | 아직 쌓인 기록이 없어요. 오늘 질문부터 시작해보세요. |
+| NO_EXPORTABLE | 둘 다 답한 기록만 주문할 수 있어요. |
+| SERVER_ERROR | 잠시 후 다시 시도해주세요. |
+
+### 체크 선택
+```text
+h-4 w-4 rounded border-stone-300 text-rose-700 focus:ring-rose-500
+```
+- 주문 기록 선택 화면에서는 날짜, 질문, 양쪽 답변 공개 여부를 함께 보여준다.
+- 체크된 항목 수와 주문 신청 버튼 상태를 화면 하단 또는 상단 액션 영역에 고정적으로 보여준다.
+- 체크박스 행 전체를 클릭 가능하게 구성한다.
+
+## 핵심 화면 기준
+### 로그인/회원가입
+- 화면 중앙에 과한 히어로를 만들지 않는다.
+- 이메일, 비밀번호, 표시 이름 입력에 집중한다.
+- 안내 문구는 짧고 따뜻하게 쓴다.
+
+### 초대 코드 생성/입력
+- 커플 공간이 없는 사용자의 다음 행동이 즉시 보여야 한다.
+- 초대 코드는 복사하기 쉬운 고정폭 텍스트로 표시한다.
+- 입력 화면은 코드 붙여넣기와 참여 버튼을 중심으로 구성한다.
+- 초대 코드를 만든 사용자는 상대 초대 대기 화면을 본다.
+- 대기 화면에는 코드, 만료 시간, 복사 버튼, 오늘 질문으로 갈 수 없다는 짧은 이유를 표시한다.
+
+### 오늘 질문
+- 첫 화면의 중심은 오늘의 질문이다.
+- 질문, 내 답변 작성 영역, 상대 답변 상태가 한 화면 흐름 안에 있어야 한다.
+- 상대가 답하지 않았을 때는 잠금 상태를 명확히 보여주되 답변 내용을 추측하게 만들지 않는다.
+- 상대가 먼저 답변한 경우에도 답변 내용은 보여주지 않고 "상대가 답변을 마쳤어요. 내 답변을 남기면 함께 열려요." 문구만 보여준다.
+- 답변 저장은 수동 저장이다. 저장 버튼은 빈 답변 또는 2000자 초과 상태에서 비활성화한다.
+- 저장 중에는 버튼을 비활성화하고 중복 제출을 막는다.
+- 저장 성공 후 짧은 성공 피드백을 보여준다.
+
+### 잠금 상태
+- 잠금 UI는 불안감을 주지 않고 기다림의 상태를 전달한다.
+- "상대가 답하면 열려요"처럼 짧고 부드러운 문구를 사용한다.
+
+### 기록 목록
+- 날짜 기준으로 스캔하기 쉬워야 한다.
+- 질문 텍스트, 내 답변 상태, 상대 답변 공개 여부를 함께 보여준다.
+- 상세로 들어가면 양쪽 답변을 편안하게 읽을 수 있어야 한다.
+
+### 주문 기록 선택 화면
+- 기록 항목을 체크해 선택한다.
+- 선택 개수와 export 형식(JSON/text)을 명확히 보여준다.
+- 주요 버튼 문구는 "주문 신청"으로 사용한다.
+- 아직 파일이 만들어진 상태가 아니므로 다운로드 버튼은 보여주지 않는다.
+- 주문 가능한 기록이 없으면 주문 신청 버튼을 비활성화하고 "둘 다 답한 기록만 주문할 수 있어요." 안내를 표시한다.
+
+### 주문 미리보기 화면
+- 사용자가 주문 신청한 날짜, 질문, 답변 목록을 최종 확인할 수 있어야 한다.
+- 미리보기에는 실제 다운로드에 포함될 내용만 보여준다.
+- 잠금 상태이거나 접근 권한이 없는 답변은 포함하지 않는다.
+- 주요 버튼은 "주문 완료"로, 보조 버튼은 "다시 선택" 또는 "취소"로 둔다.
+- 사용자가 실수로 원치 않는 기록을 주문하지 않도록 선택 항목 수와 포함 범위를 명확히 보여준다.
+
+### 주문 완료 화면
+- 주문이 완료되었음을 짧게 알려준다.
+- JSON 다운로드와 text 다운로드 버튼을 제공한다.
+- 다운로드 버튼은 명확한 파일 형식을 포함한다. 예: "JSON 다운로드", "텍스트 다운로드".
+- 주문 완료 후에도 선택된 기록 요약을 보여줘 사용자가 무엇을 내려받는지 확인할 수 있게 한다.
+- 주문 완료 전 화면에서는 다운로드 버튼을 노출하지 않는다.
+
+## 로딩/빈 상태/비활성 상태
+- 오늘 질문 로딩: 질문 영역 높이를 유지하는 skeleton 또는 "오늘의 질문을 불러오고 있어요." 문구를 사용한다.
+- 기록 목록 로딩: 리스트 행 skeleton을 사용한다.
+- 주문 미리보기 로딩: 선택 개수와 미리보기 생성 중 문구를 보여준다.
+- 기록이 없을 때: 오늘 질문 화면으로 이동하는 primary action을 제공한다.
+- 공개 완료된 기록이 없을 때: 주문 신청 버튼을 비활성화한다.
+- API 요청 중인 버튼은 disabled 상태와 대기 문구를 함께 제공한다.
+- 409 상태 충돌 후에는 최신 데이터를 다시 불러온 뒤 현재 화면에서 회복한다.
+
 ## 레이아웃
-- 전체 너비: {예: max-w-5xl}
-- 정렬: {예: 좌측 정렬 기본. 중앙 정렬 금지}
-- 간격: {예: gap-3~4, 섹션 간 space-y-8}
+- 전체 너비: max-w-3xl
+- 정렬: 좌측 정렬 기본
+- 페이지 패딩: px-4 py-6, 데스크톱에서는 py-10
+- 섹션 간격: space-y-6
+- 폼 간격: space-y-4
+- 고정 형식 UI는 min-height, grid, aspect-ratio 등으로 레이아웃 흔들림을 방지한다.
+- 모바일 주문 하단 액션은 sticky 영역으로 제공하되 콘텐츠를 가리지 않도록 하단 safe padding을 둔다.
 
 ## 타이포그래피
 | 용도 | 스타일 |
 |------|--------|
-| 페이지 제목 | {예: text-4xl font-semibold text-white} |
-| 카드 제목 | {예: text-sm font-medium text-neutral-400} |
-| 본문 | {예: text-sm text-neutral-300 leading-relaxed} |
+| 페이지 제목 | text-2xl font-semibold text-stone-950 |
+| 질문 | text-xl font-medium leading-relaxed text-stone-950 |
+| 섹션 제목 | text-sm font-semibold text-stone-900 |
+| 본문 | text-sm leading-6 text-stone-700 |
+| 보조 문구 | text-sm text-stone-500 |
+| 날짜/메타 | text-xs text-stone-500 |
 
 ## 애니메이션
-- {허용할 애니메이션만 나열. 예: fade-in (0.4s), slide-up (0.5s)}
-- {그 외 모든 애니메이션 금지}
+- 허용: fade-in 0.2s, slide-up 0.2s
+- 답변 공개 전환은 과장하지 않고 상태 변화만 부드럽게 보여준다.
+- 반복되는 장식 애니메이션, 글로우, 배경 움직임은 사용하지 않는다.
 
 ## 아이콘
-- {예: SVG 인라인, strokeWidth 1.5}
-- {예: 아이콘 컨테이너(둥근 배경 박스)로 감싸지 않는다}
+- 아이콘은 lucide-react 또는 인라인 SVG를 사용한다.
+- strokeWidth는 1.5 또는 2로 통일한다.
+- 버튼의 의미가 명확한 경우 icon + text를 사용한다.
+- 아이콘을 둥근 배경 박스 장식으로 감싸는 패턴은 피한다.
+
+## 모바일/접근성 기준
+- 모든 입력 필드는 시각적 label과 programmatic label을 가진다.
+- 에러 메시지는 필드 아래에 표시하고 `aria-describedby`로 입력과 연결한다.
+- 주요 버튼과 체크박스 행의 터치 영역은 최소 44px 높이를 확보한다.
+- 키보드 포커스가 보이는 focus ring을 유지한다.
+- 색상만으로 상태를 전달하지 않고 배지 텍스트와 안내 문구를 함께 사용한다.
+- 모달 또는 이탈 확인 UI는 키보드로 닫거나 확인할 수 있어야 한다.
+- 주문 기록 선택의 체크박스는 행 전체 클릭과 Space 키 토글을 지원한다.

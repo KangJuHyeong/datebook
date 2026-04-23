@@ -1,0 +1,16 @@
+{
+  "project": "하루 한 질문 교환일기",
+  "phase": "0-mvp",
+  "steps": [
+    { "step": 0, "name": "project-scaffold", "status": "pending" },
+    { "step": 1, "name": "backend-domain-foundation", "status": "pending" },
+    { "step": 2, "name": "backend-auth-session", "status": "pending" },
+    { "step": 3, "name": "backend-couple-invites", "status": "pending" },
+    { "step": 4, "name": "backend-daily-answers", "status": "pending" },
+    { "step": 5, "name": "backend-diary-export", "status": "pending" },
+    { "step": 6, "name": "frontend-app-shell-api", "status": "pending" },
+    { "step": 7, "name": "frontend-auth-couple", "status": "pending" },
+    { "step": 8, "name": "frontend-today-diary", "status": "pending" },
+    { "step": 9, "name": "frontend-export-flow", "status": "pending" }
+  ]
+}
