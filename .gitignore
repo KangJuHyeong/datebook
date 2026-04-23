@@ -5,6 +5,20 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 __pycache__/
 *.pyc
+build/
+.gradle/
+.pytest-tmp/
+.pytest-cache/
+.pytest-run/
+.pytest-pass-20260423/
+pytest-cache-files-*/
+pytest-tmp/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+mysql-data/
 
 # phase execution outputs
 phases/**/phase*-output.json

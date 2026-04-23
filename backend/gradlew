@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+set -eu
+
+export GRADLE_USER_HOME="$(pwd)/.gradle"
+
+if [ -n "${USERPROFILE:-}" ]; then
+  GRADLE_HOME="$(cygpath -u "$USERPROFILE" 2>/dev/null || printf '%s' "$USERPROFILE")/.gradle/wrapper/dists/gradle-8.13-bin/5xuhj0ry160q40clulazy9h7d/gradle-8.13"
+  FALLBACK_GRADLE_HOME="$(cygpath -u "$USERPROFILE" 2>/dev/null || printf '%s' "$USERPROFILE")/.gradle/wrapper/dists/gradle-8.14.2-bin/2pb3mgt1p815evrl3weanttgr/gradle-8.14.2"
+else
+  GRADLE_HOME="$HOME/.gradle/wrapper/dists/gradle-8.13-bin/5xuhj0ry160q40clulazy9h7d/gradle-8.13"
+  FALLBACK_GRADLE_HOME="$HOME/.gradle/wrapper/dists/gradle-8.14.2-bin/2pb3mgt1p815evrl3weanttgr/gradle-8.14.2"
+fi
+
+if [ ! -x "$GRADLE_HOME/bin/gradle" ]; then
+  GRADLE_HOME="$FALLBACK_GRADLE_HOME"
+fi
+
+if [ ! -x "$GRADLE_HOME/bin/gradle" ]; then
+  echo "Gradle distribution not found in local wrapper cache." >&2
+  exit 1
+fi
+
+exec "$GRADLE_HOME/bin/gradle" "$@"
