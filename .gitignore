@@ -11,6 +11,7 @@ build/
 .pytest-cache/
 .pytest-run/
 .pytest-pass-20260423/
+.test-artifacts/
 pytest-cache-files-*/
 pytest-tmp/
 dist/
