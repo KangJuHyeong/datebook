@@ -26,28 +26,13 @@ ROOT = Path(__file__).resolve().parent.parent
 @contextlib.contextmanager
 def progress_indicator(label: str):
     """터미널 진행 표시기. with 문으로 사용하며 .elapsed 로 경과 시간을 읽는다."""
-    frames = "|/-\\"
-    stop = threading.Event()
     t0 = time.monotonic()
-
-    def _animate():
-        idx = 0
-        while not stop.wait(0.12):
-            sec = int(time.monotonic() - t0)
-            sys.stderr.write(f"\r{frames[idx % len(frames)]} {label} [{sec}s]")
-            sys.stderr.flush()
-            idx += 1
-        sys.stderr.write("\r" + " " * (len(label) + 20) + "\r")
-        sys.stderr.flush()
-
-    th = threading.Thread(target=_animate, daemon=True)
-    th.start()
+    sys.stderr.write(f"  RUN {label}\n")
+    sys.stderr.flush()
     info = types.SimpleNamespace(elapsed=0.0)
     try:
         yield info
     finally:
-        stop.set()
-        th.join()
         info.elapsed = time.monotonic() - t0
 
 
