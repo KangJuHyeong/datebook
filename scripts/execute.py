@@ -238,8 +238,8 @@ class StepExecutor:
         prompt = preamble + step_file.read_text(encoding="utf-8")
         codex_cmd = self._resolve_codex_command()
         result = subprocess.run(
-            [codex_cmd, "exec", "--full-auto", "-C", self._root, prompt],
-            cwd=self._root, capture_output=True, text=True, timeout=1800,
+            [codex_cmd, "exec", "--full-auto", "-C", self._root, "-"],
+            cwd=self._root, capture_output=True, text=True, input=prompt, timeout=1800,
         )
 
         if result.returncode != 0:
