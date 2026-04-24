@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/verify-scaffold.mjs build",
-    "lint": "node scripts/verify-scaffold.mjs lint"
+    "lint": "node scripts/verify-scaffold.mjs lint",
+    "test": "node scripts/run-tests.mjs"
   },
   "dependencies": {
     "next": "16.1.6",

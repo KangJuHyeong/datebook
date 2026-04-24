@@ -1,12 +1,22 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+import {
+  ApiError,
+  apiFetch as runtimeApiFetch,
+  apiRequestJson as runtimeApiRequestJson,
+} from "./runtime.mjs";
+
+export type { ApiErrorResponse, ApiFieldError } from "@/types/api";
+export { ApiError };
 
 export async function apiFetch(path: string, init: RequestInit = {}) {
-  return fetch(`${API_BASE_URL}${path}`, {
+  return runtimeApiFetch(path, {
     ...init,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...init.headers,
-    },
   });
+}
+
+export async function apiRequestJson<T>(path: string, init: RequestInit = {}) {
+  return runtimeApiRequestJson(path, {
+    ...init,
+    credentials: "include",
+  }) as Promise<T>;
 }
