@@ -10,6 +10,13 @@ import {
   validateSignupValues,
 } from "../src/features/auth/auth-form-logic.mjs";
 import { submitCreateInvite, submitJoinInvite, validateInviteCode } from "../src/features/couple/couple-form-logic.mjs";
+import {
+  ANSWER_MAX_LENGTH,
+  getTodayViewModel,
+  submitTodayAnswer,
+  validateAnswerContent,
+} from "../src/features/today/today-form-logic.mjs";
+import { getDiaryEntryViewModel } from "../src/features/diary/diary-view-logic.mjs";
 
 async function runTest(name, fn) {
   try {
@@ -272,6 +279,178 @@ await runTest("submitJoinInvite surfaces invite errors from mock API", async () 
     fieldErrors: {},
     formError: "\ucd08\ub300 \ucf54\ub4dc\ub97c \ub2e4\uc2dc \ud655\uc778\ud574\uc8fc\uc138\uc694.",
   });
+});
+
+await runTest("today view model renders all four answer states", async () => {
+  const notAnswered = getTodayViewModel({
+    date: "2026-04-22",
+    answerState: "NOT_ANSWERED",
+    myAnswer: null,
+    partnerAnswer: { status: "LOCKED" },
+  });
+  const myAnsweredWaiting = getTodayViewModel({
+    date: "2026-04-22",
+    answerState: "MY_ANSWERED_PARTNER_WAITING",
+    myAnswer: { id: 1, content: "\ub0b4 \ub2f5\ubcc0", updatedAt: "2026-04-22T09:10:00" },
+    partnerAnswer: { status: "LOCKED" },
+  });
+  const partnerAnsweredLocked = getTodayViewModel({
+    date: "2026-04-22",
+    answerState: "PARTNER_ANSWERED_ME_WAITING",
+    myAnswer: null,
+    partnerAnswer: { status: "ANSWERED_LOCKED", content: "\uc228\uaca8\uc57c \ud568" },
+  });
+  const bothAnswered = getTodayViewModel({
+    date: "2026-04-22",
+    answerState: "BOTH_ANSWERED",
+    myAnswer: { id: 1, content: "\ub0b4 \ub2f5\ubcc0", updatedAt: "2026-04-22T09:10:00" },
+    partnerAnswer: { status: "REVEALED", content: "\uc0c1\ub300 \ub2f5\ubcc0", updatedAt: "2026-04-22T09:12:00" },
+  });
+
+  assert.equal(notAnswered.statusCopy, "\uc624\ub298\uc758 \ub2f5\ubcc0\uc744 \ub0a8\uaca8\ubcf4\uc138\uc694.");
+  assert.equal(myAnsweredWaiting.statusCopy, "\ub0b4 \ub2f5\ubcc0\uc740 \uc800\uc7a5\ub410\uc5b4\uc694. \uc0c1\ub300\uac00 \ub2f5\ud558\uba74 \ud568\uaed8 \uc5f4\ub824\uc694.");
+  assert.equal(partnerAnsweredLocked.statusCopy, "\uc0c1\ub300\uac00 \ub2f5\ubcc0\uc744 \ub9c8\ucce4\uc5b4\uc694. \ub0b4 \ub2f5\ubcc0\uc744 \ub0a8\uae30\uba74 \ud568\uaed8 \uc5f4\ub824\uc694.");
+  assert.equal(bothAnswered.statusCopy, "\ub450 \uc0ac\ub78c\uc758 \ub2f5\ubcc0\uc774 \uc5f4\ub838\uc5b4\uc694.");
+});
+
+await runTest("today view model never exposes locked partner content", async () => {
+  const locked = getTodayViewModel({
+    date: "2026-04-22",
+    answerState: "PARTNER_ANSWERED_ME_WAITING",
+    myAnswer: null,
+    partnerAnswer: { status: "ANSWERED_LOCKED", content: "\uc228\uaca8\uc57c \ud568" },
+  });
+
+  assert.equal(locked.partnerAnswer.content, undefined);
+  assert.equal(locked.partnerAnswer.description, "\uc0c1\ub300\uac00 \ub2f5\ubcc0\uc744 \ub9c8\ucce4\uc5b4\uc694. \ub0b4 \ub2f5\ubcc0\uc744 \ub0a8\uae30\uba74 \ud568\uaed8 \uc5f4\ub824\uc694.");
+});
+
+await runTest("validateAnswerContent enforces blank and max length rules", async () => {
+  assert.equal(validateAnswerContent("   "), "\ub2f5\ubcc0\uc744 \uc785\ub825\ud574\uc8fc\uc138\uc694.");
+  assert.equal(validateAnswerContent("a".repeat(ANSWER_MAX_LENGTH + 1)), "\ub2f5\ubcc0\uc740 2000\uc790 \uc774\ud558\ub85c \uc785\ub825\ud574\uc8fc\uc138\uc694.");
+  assert.equal(validateAnswerContent("\uc548\ub155"), undefined);
+});
+
+await runTest("submitTodayAnswer creates a new answer and refetches today question", async () => {
+  const calls = [];
+  const result = await submitTodayAnswer(
+    {
+      todayQuestion: {
+        dailyQuestionId: 100,
+        myAnswer: null,
+        partnerAnswer: { status: "LOCKED" },
+      },
+      content: "\uccab \ub2f5\ubcc0",
+    },
+    {
+      createAnswer: async (payload) => {
+        calls.push({ type: "create", payload });
+        return { id: 200, dailyQuestionId: 100, content: "\uccab \ub2f5\ubcc0", updatedAt: "2026-04-22T09:10:00" };
+      },
+      updateAnswer: async () => {
+        throw new Error("should not be called");
+      },
+      getTodayQuestion: async () => {
+        calls.push({ type: "refetch" });
+        return {
+          dailyQuestionId: 100,
+          date: "2026-04-22",
+          answerState: "MY_ANSWERED_PARTNER_WAITING",
+          question: "\uc9c8\ubb38",
+          myAnswer: { id: 200, content: "\uccab \ub2f5\ubcc0", updatedAt: "2026-04-22T09:10:00" },
+          partnerAnswer: { status: "LOCKED" },
+          isFullyAnswered: false,
+        };
+      },
+    },
+  );
+
+  assert.deepEqual(calls, [
+    { type: "create", payload: { dailyQuestionId: 100, content: "\uccab \ub2f5\ubcc0" } },
+    { type: "refetch" },
+  ]);
+  assert.deepEqual(result, {
+    ok: true,
+    todayQuestion: {
+      dailyQuestionId: 100,
+      date: "2026-04-22",
+      answerState: "MY_ANSWERED_PARTNER_WAITING",
+      question: "\uc9c8\ubb38",
+      myAnswer: { id: 200, content: "\uccab \ub2f5\ubcc0", updatedAt: "2026-04-22T09:10:00" },
+      partnerAnswer: { status: "LOCKED" },
+      isFullyAnswered: false,
+    },
+    successMessage: "\uc800\uc7a5\ub410\uc5b4\uc694.",
+  });
+});
+
+await runTest("submitTodayAnswer surfaces backend failures", async () => {
+  const result = await submitTodayAnswer(
+    {
+      todayQuestion: {
+        dailyQuestionId: 100,
+        myAnswer: { id: 200, content: "\uc874\uc7ac\ud558\ub294 \ub2f5\ubcc0", updatedAt: "2026-04-22T09:10:00" },
+        partnerAnswer: { status: "LOCKED" },
+      },
+      content: "\uc218\uc815 \ub2f5\ubcc0",
+    },
+    {
+      createAnswer: async () => {
+        throw new Error("should not be called");
+      },
+      updateAnswer: async () => {
+        throw new ApiError(400, {
+          code: "VALIDATION_ERROR",
+          message: "\uc785\ub825\uac12\uc744 \ud655\uc778\ud574\uc8fc\uc138\uc694.",
+          fields: [{ field: "content", message: "\ub2f5\ubcc0\uc744 \ub2e4\uc2dc \ud655\uc778\ud574\uc8fc\uc138\uc694." }],
+        });
+      },
+      getTodayQuestion: async () => {
+        throw new Error("should not be called");
+      },
+    },
+  );
+
+  assert.deepEqual(result, {
+    ok: false,
+    fieldErrors: { content: "\ub2f5\ubcc0\uc744 \ub2e4\uc2dc \ud655\uc778\ud574\uc8fc\uc138\uc694." },
+    formError: "\uc785\ub825\uac12\uc744 \ud655\uc778\ud574\uc8fc\uc138\uc694.",
+    redirectTo: undefined,
+    shouldRefetch: false,
+  });
+});
+
+await runTest("today panel source disables submit during save and shows success feedback", async () => {
+  const source = await readFile(new URL("../src/features/today/today-question-panel.tsx", import.meta.url), "utf8");
+  assert.match(source, /disabled=\{saving \|\| Boolean\(validationError\)\}/);
+  assert.match(source, /setSuccessMessage\(result\.successMessage\)/);
+  assert.match(source, /beforeunload/);
+});
+
+await runTest("diary view logic maps revealed and locked entries to clear status copy", async () => {
+  const revealed = getDiaryEntryViewModel({
+    date: "2026-04-22",
+    myAnswerStatus: "ANSWERED",
+    partnerAnswerStatus: "REVEALED",
+    exportable: true,
+  });
+  const locked = getDiaryEntryViewModel({
+    date: "2026-04-21",
+    myAnswerStatus: "NOT_ANSWERED",
+    partnerAnswerStatus: "LOCKED",
+    exportable: false,
+  });
+
+  assert.equal(revealed.partnerAnswerBadge, "\uacf5\uac1c\ub428");
+  assert.equal(revealed.partnerStatusCopy, "\ub450 \uc0ac\ub78c\uc758 \ub2f5\ubcc0\uc774 \ubaa8\ub450 \uacf5\uac1c\ub410\uc5b4\uc694.");
+  assert.equal(locked.partnerAnswerBadge, "\uc7a0\uae08");
+  assert.equal(locked.partnerStatusCopy, "\uc0c1\ub300\uac00 \ub2f5\ud558\uba74 \uc5f4\ub824\uc694.");
+});
+
+await runTest("diary panel source includes empty state action and does not render partner content", async () => {
+  const source = await readFile(new URL("../src/features/diary/diary-entries-panel.tsx", import.meta.url), "utf8");
+  assert.match(source, /오늘 질문으로 가기/);
+  assert.doesNotMatch(source, /partnerAnswer\.content/);
 });
 
 console.log("frontend tests passed");

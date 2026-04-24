@@ -85,6 +85,19 @@ export type TodayAnswer = {
   updatedAt: string;
 };
 
+export type AnswerResponse = TodayAnswer & {
+  dailyQuestionId: number;
+};
+
+export type CreateAnswerRequest = {
+  dailyQuestionId: number;
+  content: string;
+};
+
+export type UpdateAnswerRequest = {
+  content: string;
+};
+
 export type PartnerAnswer = {
   status: PartnerAnswerStatus;
   id?: number;
