@@ -45,7 +45,9 @@
     {
       "step": 5,
       "name": "backend-diary-export",
-      "status": "pending"
+      "status": "completed",
+      "summary": "Implemented diary listing and export order backend APIs with session-scoped ownership checks, preview/complete/cancel/download state flow, snapshot downloads, and backend tests.",
+      "completed_at": "2026-04-24T12:28:08+0900"
     },
     {
       "step": 6,
