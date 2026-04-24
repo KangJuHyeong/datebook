@@ -61,7 +61,10 @@
     {
       "step": 7,
       "name": "frontend-auth-couple",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-04-24T17:47:28+0900",
+      "summary": "Implemented signup/login forms, logout entry, and couple invite create/join UI with route redirects, field-level errors, and frontend auth/couple flow tests.",
+      "completed_at": "2026-04-24T18:09:41+0900"
     },
     {
       "step": 8,
