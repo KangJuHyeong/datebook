@@ -7,8 +7,8 @@ export default async function LoginPage() {
 
   return (
     <AppLayout
-      title="\ub2e4\uc2dc \uae30\ub85d\uc7a5\uc73c\ub85c \ub3cc\uc544\uc640\uc694."
-      description="\uc774\uba54\uc77c\uacfc \ube44\ubc00\ubc88\ud638\ub97c \uc785\ub825\ud558\uba74 \uc624\ub298\uc758 \uc9c8\ubb38\uc73c\ub85c \uc774\uc5b4\uc11c \ub4e4\uc5b4\uac08 \uc218 \uc788\uc5b4\uc694."
+      title="다시 기록장으로 돌아와요."
+      description="이메일과 비밀번호를 입력하면 오늘의 질문으로 이어서 들어갈 수 있어요."
     >
       <AuthForm mode="login" />
     </AppLayout>

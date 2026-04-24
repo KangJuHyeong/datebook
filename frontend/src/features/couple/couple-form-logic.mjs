@@ -1,12 +1,12 @@
 import { ApiError } from "../../lib/api/runtime.mjs";
 
-const SERVER_ERROR_MESSAGE = "\uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574\uc8fc\uc138\uc694.";
+const SERVER_ERROR_MESSAGE = "잠시 후 다시 시도해주세요.";
 
 export function validateInviteCode(values) {
   const inviteCode = values.inviteCode.trim();
 
   if (!inviteCode) {
-    return { inviteCode: "\ucd08\ub300 \ucf54\ub4dc\ub97c \uc785\ub825\ud574\uc8fc\uc138\uc694." };
+    return { inviteCode: "초대 코드를 입력해주세요." };
   }
 
   return {};

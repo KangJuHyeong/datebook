@@ -22,19 +22,19 @@ type AuthFormProps = {
 
 const FORM_COPY = {
   login: {
-    title: "\ub2e4\uc2dc \uae30\ub85d\uc7a5\uc73c\ub85c \ub3cc\uc544\uc640\uc694.",
-    description: "\uc624\ub298\uc758 \uc9c8\ubb38\uacfc \ub450 \uc0ac\ub78c\uc758 \uae30\ub85d\uc744 \uc774\uc5b4\uc11c \ud655\uc778\ud560 \uc218 \uc788\uc5b4\uc694.",
-    submitLabel: "\ub85c\uadf8\uc778",
-    pendingLabel: "\ub85c\uadf8\uc778 \uc911...",
-    alternateLabel: "\ud68c\uc6d0\uac00\uc785\uc73c\ub85c \uc774\ub3d9",
+    title: "다시 기록장으로 돌아와요.",
+    description: "오늘의 질문과 두 사람의 기록을 이어서 확인할 수 있어요.",
+    submitLabel: "로그인",
+    pendingLabel: "로그인 중...",
+    alternateLabel: "회원가입으로 이동",
     alternateHref: "/signup",
   },
   signup: {
-    title: "\uc870\uc6a9\ud55c \uae30\ub85d\uc744 \uc2dc\uc791\ud574\uc694.",
-    description: "\uac00\uc785 \ud6c4 \ubc14\ub85c \ucee4\ud50c \uc5f0\uacb0\uc744 \uc774\uc5b4\uac08 \uc218 \uc788\uc5b4\uc694.",
-    submitLabel: "\uac00\uc785\ud558\uae30",
-    pendingLabel: "\uac00\uc785 \uc911...",
-    alternateLabel: "\ub85c\uadf8\uc778\uc73c\ub85c \uc774\ub3d9",
+    title: "조용한 기록을 시작해요.",
+    description: "가입 후 바로 커플 연결을 이어갈 수 있어요.",
+    submitLabel: "가입하기",
+    pendingLabel: "가입 중...",
+    alternateLabel: "로그인으로 이동",
     alternateHref: "/login",
   },
 } as const;
@@ -82,10 +82,10 @@ export function AuthForm({ mode }: AuthFormProps) {
           <Input
             id="displayName"
             name="displayName"
-            label="\ud45c\uc2dc \uc774\ub984"
+            label="표시 이름"
             type="text"
             autoComplete="nickname"
-            placeholder="\ubbfc\uc9c0"
+            placeholder="민지"
             maxLength={20}
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
@@ -95,7 +95,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         <Input
           id={`${mode}-email`}
           name="email"
-          label="\uc774\uba54\uc77c"
+          label="이메일"
           type="email"
           autoComplete="email"
           placeholder="a@example.com"
@@ -106,10 +106,10 @@ export function AuthForm({ mode }: AuthFormProps) {
         <Input
           id={`${mode}-password`}
           name="password"
-          label="\ube44\ubc00\ubc88\ud638"
+          label="비밀번호"
           type="password"
           autoComplete={mode === "login" ? "current-password" : "new-password"}
-          placeholder={mode === "login" ? "\ube44\ubc00\ubc88\ud638\ub97c \uc785\ub825\ud574\uc8fc\uc138\uc694." : "8\uc790 \uc774\uc0c1 \uc785\ub825\ud574\uc8fc\uc138\uc694."}
+          placeholder={mode === "login" ? "비밀번호를 입력해주세요." : "8자 이상 입력해주세요."}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           error={fieldErrors.password}

@@ -1,7 +1,7 @@
 import { ApiError } from "../../lib/api/runtime.mjs";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SERVER_ERROR_MESSAGE = "\uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574\uc8fc\uc138\uc694.";
+const SERVER_ERROR_MESSAGE = "잠시 후 다시 시도해주세요.";
 
 export function getPostAuthRedirectPath(user) {
   return user.coupleId ? "/today" : "/couple";
@@ -12,13 +12,13 @@ export function validateLoginValues(values) {
   const email = values.email.trim();
 
   if (!email) {
-    errors.email = "\uc774\uba54\uc77c\uc744 \uc785\ub825\ud574\uc8fc\uc138\uc694.";
+    errors.email = "이메일을 입력해주세요.";
   } else if (!EMAIL_PATTERN.test(email)) {
-    errors.email = "\uc62c\ubc14\ub978 \uc774\uba54\uc77c \ud615\uc2dd\uc774 \uc544\ub2d9\ub2c8\ub2e4.";
+    errors.email = "올바른 이메일 형식이 아닙니다.";
   }
 
   if (!values.password) {
-    errors.password = "\ube44\ubc00\ubc88\ud638\ub97c \uc785\ub825\ud574\uc8fc\uc138\uc694.";
+    errors.password = "비밀번호를 입력해주세요.";
   }
 
   return errors;
@@ -29,15 +29,15 @@ export function validateSignupValues(values) {
   const displayName = values.displayName.trim();
 
   if (!displayName) {
-    errors.displayName = "\ud45c\uc2dc \uc774\ub984\uc744 \uc785\ub825\ud574\uc8fc\uc138\uc694.";
+    errors.displayName = "표시 이름을 입력해주세요.";
   } else if (displayName.length > 20) {
-    errors.displayName = "\ud45c\uc2dc \uc774\ub984\uc740 20\uc790 \uc774\ud558\ub85c \uc785\ub825\ud574\uc8fc\uc138\uc694.";
+    errors.displayName = "표시 이름은 20자 이하로 입력해주세요.";
   }
 
   if (!values.password) {
-    errors.password = "\ube44\ubc00\ubc88\ud638\ub97c \uc785\ub825\ud574\uc8fc\uc138\uc694.";
+    errors.password = "비밀번호를 입력해주세요.";
   } else if (values.password.length < 8 || values.password.length > 72) {
-    errors.password = "\ube44\ubc00\ubc88\ud638\ub294 8\uc790 \uc774\uc0c1 72\uc790 \uc774\ud558\ub85c \uc785\ub825\ud574\uc8fc\uc138\uc694.";
+    errors.password = "비밀번호는 8자 이상 72자 이하로 입력해주세요.";
   }
 
   return errors;

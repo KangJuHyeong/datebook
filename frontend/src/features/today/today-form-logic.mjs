@@ -6,7 +6,7 @@ export const TODAY_STATE_COPY = {
   NOT_ANSWERED: "오늘의 답변을 남겨보세요.",
   MY_ANSWERED_PARTNER_WAITING: "내 답변은 저장됐어요. 상대가 답하면 함께 열려요.",
   PARTNER_ANSWERED_ME_WAITING: "상대가 답변을 마쳤어요. 내 답변을 남기면 함께 열려요.",
-  BOTH_ANSWERED: "두 사람의 답변이 열렸어요.",
+  BOTH_ANSWERED: "두 사람의 답변이 모두 열렸어요.",
 };
 
 export function validateAnswerContent(content) {
@@ -39,14 +39,14 @@ export function getTodayViewModel(todayQuestion) {
       badge: hasMyAnswer ? "작성 완료" : "아직 작성 전",
       tone: hasMyAnswer ? "success" : "neutral",
       description: hasMyAnswer
-        ? "내 답변은 저장된 내용을 기준으로 다시 수정할 수 있어요."
+        ? "내 답변은 저장된 내용으로 기준이 잡혀 있어요. 필요하면 다시 수정할 수 있어요."
         : "저장 버튼을 누르면 오늘의 답변이 기록돼요.",
     },
     partnerAnswer: isRevealed
       ? {
           badge: "공개됨",
           tone: "success",
-          description: "두 사람이 모두 답해서 상대 답변이 열렸어요.",
+          description: "두 사람 모두 답변을 남겨서 상대 답변이 공개됐어요.",
           content: todayQuestion.partnerAnswer.content ?? "",
           updatedAt: todayQuestion.partnerAnswer.updatedAt,
         }

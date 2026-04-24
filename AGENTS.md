@@ -33,6 +33,13 @@
 - 문서와 구현이 충돌하면 문서를 먼저 업데이트한 뒤 구현한다.
 - MVP에서는 결제, 배송, PDF 생성, 실물 인쇄 주문, 소셜 로그인, 모바일 앱을 구현하지 않는다.
 
+## 환경 파일
+- Frontend 로컬 환경 파일: `frontend/.env.local`
+- Frontend 예시 파일: `frontend/.env.example`
+- Backend 로컬 환경 파일: `backend/.env`
+- Backend 예시 파일: `backend/.env.example`
+- Backend 기본 DB 포트는 로컬 MySQL 충돌을 피하기 위해 `3307`을 사용한다.
+
 ## 명령어
 ### Frontend
 ```bash
@@ -44,9 +51,15 @@ cd frontend && npm run test     # 프론트엔드 테스트
 
 ### Backend
 ```bash
-cd backend && ./gradlew bootRun    # Spring Boot API 서버, 기본 http://localhost:8080
-cd backend && ./gradlew test       # 백엔드 테스트
-cd backend && ./gradlew build      # 백엔드 빌드
+cd backend && ./gradlew run     # Spring Boot API 서버, 기본 http://localhost:8080
+cd backend && ./gradlew test    # 백엔드 테스트
+cd backend && ./gradlew build   # 백엔드 빌드
+```
+
+### Windows PowerShell Backend
+```powershell
+cd backend
+.\gradlew.bat run
 ```
 
 ### Database

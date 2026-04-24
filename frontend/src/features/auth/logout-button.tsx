@@ -23,7 +23,7 @@ export function LogoutButton() {
 
   return (
     <Button type="button" variant="secondary" className="px-3" onClick={handleLogout} disabled={pending}>
-      {pending ? "\ub85c\uadf8\uc544\uc6c3 \uc911..." : "\ub85c\uadf8\uc544\uc6c3"}
+      {pending ? "로그아웃 중..." : "로그아웃"}
     </Button>
   );
 }

@@ -9,7 +9,7 @@ export default async function TodayPage() {
     <AppLayout
       currentUser={user}
       title="오늘 질문"
-      description="오늘의 질문에 답하고, 서로의 답변이 언제 열리는지 같은 흐름 안에서 확인해보세요."
+      description="오늘의 질문을 마주하고, 서로의 답변이 열리는 순간을 같은 기록장 안에서 확인해보세요."
     >
       <TodayQuestionPanel />
     </AppLayout>

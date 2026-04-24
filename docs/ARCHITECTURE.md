@@ -8,7 +8,7 @@
 - Backend: Spring Boot, Java, Spring Data JPA
 - Database: MySQL
 - Auth: 이메일/비밀번호 + Spring 서버 세션
-- Runtime: 로컬 실행
+- Runtime: 로컬 실행, 환경 변수 파일 기반 설정
 - Timezone: Asia/Seoul
 - Timestamp storage: DB의 DATETIME은 UTC 기준으로 저장하고, 질문 날짜만 Asia/Seoul LocalDate로 계산한다.
 
@@ -16,6 +16,8 @@
 ### Frontend
 ```text
 frontend/
+├── .env.local                # 로컬 프론트엔드 설정 (gitignore)
+├── .env.example              # 프론트엔드 환경 변수 예시
 └── src/
     ├── app/                  # App Router 페이지와 레이아웃
     │   ├── login/
@@ -34,6 +36,8 @@ frontend/
 ### Backend
 ```text
 backend/
+├── .env                      # 로컬 백엔드 설정 (gitignore)
+├── .env.example              # 백엔드 환경 변수 예시
 └── src/main/java/
     └── app/
         ├── config/           # security, cors, session, web 설정
@@ -43,6 +47,9 @@ backend/
         ├── domain/           # JPA entity
         ├── dto/              # request/response DTO
         └── common/           # error, time, response 공통 코드
+└── src/main/resources/
+    ├── application.yml       # env import, datasource, CORS, server 설정
+    └── data.sql              # 질문 seed 데이터
 ```
 
 ## 패턴
@@ -662,7 +669,7 @@ Q. 오늘 가장 먼저 떠오른 서로의 모습은 무엇인가요?
 ## 보안 및 개인정보
 - 비밀번호는 BCrypt로 해시한다.
 - 세션에는 userId만 저장한다.
-- CORS는 http://localhost:3000만 허용하고 credentials 요청을 허용한다.
+- CORS 허용 origin은 환경 변수로 바꿀 수 있으며 로컬 기본값은 http://localhost:3000이다. credentials 요청을 허용한다.
 - 답변 본문, 비밀번호, 세션 ID를 애플리케이션 로그에 남기지 않는다.
 - 커플 소유권 검증은 controller가 아니라 service에서 공통으로 수행한다.
 - 주문 완료 시 저장되는 json_payload와 text_payload는 답변 본문을 포함하므로 답변과 같은 수준의 개인정보로 취급한다.
@@ -677,5 +684,8 @@ Q. 오늘 가장 먼저 떠오른 서로의 모습은 무엇인가요?
 ## 로컬 실행 기준
 - Frontend: http://localhost:3000
 - Backend: http://localhost:8080
-- Database: local Docker Compose 또는 로컬 설치 MySQL
-- CORS는 http://localhost:3000만 허용하고 credentials 요청을 허용한다.
+- Database: Docker Compose MySQL (호스트 `3307` -> 컨테이너 `3306`)
+- Frontend 환경 변수: `frontend/.env.local`의 `NEXT_PUBLIC_API_BASE_URL` 기본값은 `http://localhost:8080`
+- Backend 환경 변수: `backend/.env`를 optional import하며 `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `SERVER_PORT`, `CORS_ALLOWED_ORIGIN`을 덮어쓸 수 있다.
+- Backend 실행 명령: `./gradlew run` 또는 Windows PowerShell에서 `.\gradlew.bat run`
+- CORS 허용 origin 기본값은 `http://localhost:3000`이며 `CORS_ALLOWED_ORIGIN`으로 변경할 수 있다.

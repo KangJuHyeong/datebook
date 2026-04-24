@@ -1,9 +1,9 @@
 import type { NavItem, StatusTone } from "@/types/app";
 
 export const APP_NAV_ITEMS: NavItem[] = [
-  { href: "/today", label: "\uc624\ub298 \uc9c8\ubb38" },
-  { href: "/diary", label: "\uae30\ub85d" },
-  { href: "/export", label: "\uc8fc\ubb38" },
+  { href: "/today", label: "오늘 질문" },
+  { href: "/diary", label: "기록" },
+  { href: "/export", label: "주문" },
 ];
 
 export const STATUS_BADGE_STYLES: Record<StatusTone, string> = {

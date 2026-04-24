@@ -86,9 +86,9 @@ export function CoupleConnectPanel() {
 
     try {
       await navigator.clipboard.writeText(inviteState.inviteCode);
-      setCopyFeedback("\ucf54\ub4dc\ub97c \ubcf5\uc0ac\ud588\uc5b4\uc694.");
+      setCopyFeedback("코드를 복사했어요.");
     } catch {
-      setCopyFeedback("\ubcf5\uc0ac\uc5d0 \uc2e4\ud328\ud588\uc5b4\uc694. \ucf54\ub4dc\ub97c \uc9c1\uc811 \uc120\ud0dd\ud574\uc8fc\uc138\uc694.");
+      setCopyFeedback("복사에 실패했어요. 코드를 직접 선택해주세요.");
     }
   }
 
@@ -97,13 +97,13 @@ export function CoupleConnectPanel() {
       <article className="rounded-lg border border-stone-200 bg-white p-5">
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-stone-900">\ucd08\ub300 \ucf54\ub4dc \ub9cc\ub4e4\uae30</h2>
+            <h2 className="text-sm font-semibold text-stone-900">초대 코드 만들기</h2>
             <StatusBadge tone={inviteState ? "progress" : "neutral"}>
-              {inviteState ? "\uc0c1\ub300 \ub300\uae30" : "\uc900\ube44 \uc804"}
+              {inviteState ? "상대 대기" : "준비 전"}
             </StatusBadge>
           </div>
           <p className="text-sm leading-6 text-stone-700">
-            \uc0c1\ub300\uc5d0\uac8c \uc804\ub2ec\ud560 \ucf54\ub4dc\ub97c \ub9cc\ub4e4\uace0, \uc5f0\uacb0\uc774 \uc644\ub8cc\ub420 \ub54c\uae4c\uc9c0 \uc774 \ud654\uba74\uc5d0\uc11c \uae30\ub2e4\ub9b4 \uc218 \uc788\uc5b4\uc694.
+            상대에게 전달할 코드를 만들고, 연결이 완료될 때까지 이 화면에서 기다릴 수 있어요.
           </p>
           {inviteState ? (
             <div className="space-y-3 rounded-lg border border-stone-200 bg-stone-50 p-4" aria-live="polite">
@@ -111,13 +111,13 @@ export function CoupleConnectPanel() {
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Invite Code</p>
                 <p className="font-mono text-xl text-stone-950">{inviteState.inviteCode}</p>
               </div>
-              <p className="text-sm text-stone-700">\ub9cc\ub8cc \uc2dc\uac04: {formattedExpiry}</p>
-              <p className="text-sm text-stone-500">\uc0c1\ub300\uac00 \uc774 \ucf54\ub4dc\ub97c \uc785\ub825\ud558\uba74 \uc624\ub298 \uc9c8\ubb38\uc73c\ub85c \ud568\uaed8 \uc774\ub3d9\ud560 \uc218 \uc788\uc5b4\uc694.</p>
+              <p className="text-sm text-stone-700">만료 시간: {formattedExpiry}</p>
+              <p className="text-sm text-stone-500">상대가 이 코드를 입력하면 오늘 질문으로 함께 이동할 수 있어요.</p>
               <div className="flex flex-wrap items-center gap-3">
                 <Button type="button" variant="secondary" onClick={handleCopyInviteCode}>
-                  \ucf54\ub4dc \ubcf5\uc0ac
+                  코드 복사
                 </Button>
-                <StatusBadge tone="waiting">\uc9c8\ubb38 \uc5f4\uae30 \uc804 \ub300\uae30 \uc911</StatusBadge>
+                <StatusBadge tone="waiting">질문 열기 전 대기 중</StatusBadge>
               </div>
               {copyFeedback ? <p className="text-sm text-stone-500">{copyFeedback}</p> : null}
             </div>
@@ -128,21 +128,21 @@ export function CoupleConnectPanel() {
             </p>
           ) : null}
           <Button type="button" onClick={handleCreateInvite} disabled={creating || Boolean(inviteState)}>
-            {creating ? "\ucf54\ub4dc \ub9cc\ub4dc\ub294 \uc911..." : inviteState ? "\ucf54\ub4dc \uc0dd\uc131 \uc644\ub8cc" : "\ucf54\ub4dc \ub9cc\ub4e4\uae30"}
+            {creating ? "코드 만드는 중..." : inviteState ? "코드 생성 완료" : "코드 만들기"}
           </Button>
         </div>
       </article>
       <article className="rounded-lg border border-stone-200 bg-white p-5">
         <form className="space-y-3" onSubmit={handleJoin} noValidate>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-stone-900">\ucd08\ub300 \ucf54\ub4dc \uc785\ub825</h2>
-            <StatusBadge tone="selected">\ubc14\ub85c \uc5f0\uacb0</StatusBadge>
+            <h2 className="text-sm font-semibold text-stone-900">초대 코드 입력</h2>
+            <StatusBadge tone="selected">바로 연결</StatusBadge>
           </div>
-          <p className="text-sm leading-6 text-stone-700">\uc0c1\ub300\uac00 \ubcf4\ub0b8 \ucf54\ub4dc\ub97c \ubd99\uc5ec \ub123\uc73c\uba74 \ub450 \uc0ac\ub78c\uc758 \uae30\ub85d\uc7a5\uc774 \uc5f0\uacb0\ub3fc\uc694.</p>
+          <p className="text-sm leading-6 text-stone-700">상대가 보낸 코드를 붙여 넣으면 두 사람의 기록장이 연결돼요.</p>
           <Input
             id="inviteCode"
             name="inviteCode"
-            label="\ucd08\ub300 \ucf54\ub4dc"
+            label="초대 코드"
             placeholder="A1B2C3D4"
             autoCapitalize="characters"
             value={inviteCode}
@@ -155,7 +155,7 @@ export function CoupleConnectPanel() {
             </p>
           ) : null}
           <Button type="submit" disabled={joining}>
-            {joining ? "\ucc38\uc5ec \uc911..." : "\ucc38\uc5ec\ud558\uae30"}
+            {joining ? "참여 중..." : "참여하기"}
           </Button>
         </form>
       </article>

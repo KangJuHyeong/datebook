@@ -196,7 +196,7 @@ export function TodayQuestionPanel() {
               />
             </label>
             <div className="flex items-center justify-between gap-3 text-xs text-stone-500">
-              <span>{todayQuestion.myAnswer?.updatedAt ? `마지막 저장 ${formatDateTime(todayQuestion.myAnswer.updatedAt)}` : "아직 저장된 답변이 없어요."}</span>
+              <span>{todayQuestion.myAnswer?.updatedAt ? `마지막 저장 ${formatDateTime(todayQuestion.myAnswer.updatedAt)}` : "아직 저장한 답변이 없어요."}</span>
               <span aria-live="polite">{draft.length}/{ANSWER_MAX_LENGTH}</span>
             </div>
             {fieldError || validationError ? (
