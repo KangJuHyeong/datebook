@@ -17,6 +17,13 @@ import {
   validateAnswerContent,
 } from "../src/features/today/today-form-logic.mjs";
 import { getDiaryEntryViewModel } from "../src/features/diary/diary-view-logic.mjs";
+import {
+  cancelExportSelection,
+  getExportEntryViewModel,
+  submitExportCompletion,
+  submitExportSelection,
+  toggleExportSelection,
+} from "../src/features/export/export-flow-logic.mjs";
 
 async function runTest(name, fn) {
   try {

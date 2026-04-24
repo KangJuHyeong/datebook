@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "node scripts/verify-scaffold.mjs build",
     "lint": "node scripts/verify-scaffold.mjs lint",
-    "test": "node scripts/run-tests.mjs"
+    "test": "node scripts/run-tests.mjs && node scripts/run-export-tests.mjs"
   },
   "dependencies": {
     "next": "16.1.6",
