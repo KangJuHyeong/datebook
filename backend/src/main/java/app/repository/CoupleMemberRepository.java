@@ -16,4 +16,6 @@ public interface CoupleMemberRepository extends JpaRepository<CoupleMember, Long
     Optional<CoupleMember> findByUser_Id(Long userId);
 
     List<CoupleMember> findAllByCouple_Id(Long coupleId);
+
+    List<CoupleMember> findAllByCouple_IdOrderByJoinedAtAscIdAsc(Long coupleId);
 }

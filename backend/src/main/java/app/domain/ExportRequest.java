@@ -82,4 +82,21 @@ public class ExportRequest extends CreatedAtEntity {
     public String getTextPayload() {
         return textPayload;
     }
+
+    public void markPreviewed(LocalDateTime previewedAt) {
+        this.status = ExportStatus.PREVIEWED;
+        this.previewedAt = previewedAt;
+    }
+
+    public void markCompleted(LocalDateTime completedAt, String jsonPayload, String textPayload) {
+        this.status = ExportStatus.COMPLETED;
+        this.completedAt = completedAt;
+        this.jsonPayload = jsonPayload;
+        this.textPayload = textPayload;
+    }
+
+    public void cancel(LocalDateTime cancelledAt) {
+        this.status = ExportStatus.CANCELLED;
+        this.cancelledAt = cancelledAt;
+    }
 }

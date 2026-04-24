@@ -1,5 +1,6 @@
 package app.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,4 +13,6 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     Optional<Answer> findByDailyQuestion_IdAndUser_Id(Long dailyQuestionId, Long userId);
 
     List<Answer> findAllByDailyQuestion_Id(Long dailyQuestionId);
+
+    List<Answer> findAllByDailyQuestion_IdIn(Collection<Long> dailyQuestionIds);
 }
