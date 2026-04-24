@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "backend-domain-foundation",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-04-24T10:20:42+0900",
+      "summary": "Implemented backend JPA domain entities, repositories, global error handling, Seoul/UTC time utilities, question seed data, and backend foundation tests.",
+      "completed_at": "2026-04-24T11:11:32+0900"
     },
     {
       "step": 2,
