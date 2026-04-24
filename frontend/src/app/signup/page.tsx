@@ -1,24 +1,16 @@
-import Link from "next/link";
 import { AppLayout } from "@/components/layout/app-layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { AuthForm } from "@/features/auth/auth-form";
+import { redirectAuthenticatedUser } from "@/lib/routing/server";
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  await redirectAuthenticatedUser();
+
   return (
-    <AppLayout title="처음 기록 시작하기" description="회원가입 폼 상세 검증과 제출은 다음 step에서 연결합니다.">
-      <section className="rounded-lg border border-stone-200 bg-white p-5">
-        <form className="space-y-4">
-          <Input id="displayName" label="표시 이름" type="text" placeholder="민지" />
-          <Input id="signup-email" label="이메일" type="email" placeholder="a@example.com" />
-          <Input id="signup-password" label="비밀번호" type="password" placeholder="8자 이상 입력하세요" />
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Button type="button">가입하기</Button>
-            <Link className="text-sm font-medium text-stone-500 hover:text-stone-900" href="/login">
-              로그인으로 이동
-            </Link>
-          </div>
-        </form>
-      </section>
+    <AppLayout
+      title="\ucc98\uc74c \uae30\ub85d\uc744 \uc2dc\uc791\ud574\uc694."
+      description="\uac00\uc785\uc744 \ub9c8\uce58\uba74 \ucee4\ud50c \uc5f0\uacb0\uc744 \ub9cc\ub4e4\uac70\ub098 \ucd08\ub300 \ucf54\ub4dc\ub97c \uc785\ub825\ud560 \uc218 \uc788\uc5b4\uc694."
+    >
+      <AuthForm mode="signup" />
     </AppLayout>
   );
 }

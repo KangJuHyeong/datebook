@@ -1,10 +1,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { resolveProtectedRoute, resolveRootRoute } from "./guards.mjs";
+import { resolveAuthRoute, resolveCoupleRoute, resolveProtectedRoute, resolveRootRoute } from "./guards.mjs";
 import type { AuthUser } from "@/types/api";
 import { ApiError, apiRequestJson } from "@/lib/api/client";
 
-async function fetchCurrentUserFromServer(): Promise<AuthUser | null> {
+export async function getCurrentUserOnServer(): Promise<AuthUser | null> {
   const cookieHeader = (await cookies()).toString();
 
   try {
@@ -24,12 +24,12 @@ async function fetchCurrentUserFromServer(): Promise<AuthUser | null> {
 }
 
 export async function getRootRedirectPath() {
-  const user = await fetchCurrentUserFromServer();
+  const user = await getCurrentUserOnServer();
   return resolveRootRoute(user);
 }
 
 export async function requireProtectedUser() {
-  const user = await fetchCurrentUserFromServer();
+  const user = await getCurrentUserOnServer();
   const result = resolveProtectedRoute(user);
 
   if (!result.allowed) {
@@ -37,4 +37,24 @@ export async function requireProtectedUser() {
   }
 
   return result.user;
+}
+
+export async function redirectAuthenticatedUser() {
+  const user = await getCurrentUserOnServer();
+  const redirectTo = resolveAuthRoute(user);
+
+  if (redirectTo) {
+    redirect(redirectTo);
+  }
+}
+
+export async function requireCoupleSetupUser() {
+  const user = await getCurrentUserOnServer();
+  const redirectTo = resolveCoupleRoute(user);
+
+  if (redirectTo) {
+    redirect(redirectTo);
+  }
+
+  return user as AuthUser;
 }

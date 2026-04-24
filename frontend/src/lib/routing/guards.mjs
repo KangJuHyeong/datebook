@@ -6,6 +6,18 @@ export function resolveRootRoute(user) {
   return user.coupleId ? "/today" : "/couple";
 }
 
+export function resolveAuthRoute(user) {
+  return user ? resolveRootRoute(user) : null;
+}
+
+export function resolveCoupleRoute(user) {
+  if (!user) {
+    return "/login";
+  }
+
+  return user.coupleId ? "/today" : null;
+}
+
 export function resolveProtectedRoute(user) {
   if (!user) {
     return { allowed: false, redirectTo: "/login" };
