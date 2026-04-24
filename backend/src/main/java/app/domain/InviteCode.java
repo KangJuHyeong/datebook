@@ -54,6 +54,19 @@ public class InviteCode {
         this.expiresAt = expiresAt;
     }
 
+    public boolean isExpired(LocalDateTime currentTime) {
+        return expiresAt.isBefore(currentTime);
+    }
+
+    public boolean isUsed() {
+        return usedAt != null;
+    }
+
+    public void markUsed(User user, LocalDateTime usedAt) {
+        this.usedByUser = user;
+        this.usedAt = usedAt;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now(ZoneOffset.UTC);
