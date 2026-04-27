@@ -77,10 +77,15 @@ class DiaryServiceTest {
         assertThat(response.entries().get(0).dailyQuestionId()).isEqualTo(newer.getId());
         assertThat(response.entries().get(0).myAnswerStatus()).isEqualTo("NOT_ANSWERED");
         assertThat(response.entries().get(0).partnerAnswerStatus()).isEqualTo("ANSWERED_LOCKED");
+        assertThat(response.entries().get(0).myAnswer()).isNull();
+        assertThat(response.entries().get(0).partnerAnswer()).isNull();
         assertThat(response.entries().get(0).exportable()).isFalse();
         assertThat(response.entries().get(1).dailyQuestionId()).isEqualTo(older.getId());
         assertThat(response.entries().get(1).myAnswerStatus()).isEqualTo("ANSWERED");
         assertThat(response.entries().get(1).partnerAnswerStatus()).isEqualTo("REVEALED");
+        assertThat(response.entries().get(1).myAnswer().content()).isEqualTo("내 답변");
+        assertThat(response.entries().get(1).partnerAnswer().displayName()).isEqualTo("도윤");
+        assertThat(response.entries().get(1).partnerAnswer().content()).isEqualTo("상대 답변");
         assertThat(response.entries().get(1).exportable()).isTrue();
     }
 

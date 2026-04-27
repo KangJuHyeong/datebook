@@ -70,6 +70,37 @@ await runTest("apiRequestJson sends credentials include and parses success paylo
   assert.equal(calls[0].url, "http://localhost:8080/api/auth/me");
 });
 
+await runTest("api runtime uses same-origin BFF paths in the browser", async () => {
+  globalThis.window = {};
+
+  try {
+    const calls = [];
+    const mockFetch = async (url, init) => {
+      calls.push({ url, init });
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    };
+
+    await apiRequestJson("/api/diary", { method: "GET" }, mockFetch);
+
+    assert.equal(calls[0].url, "/api/diary");
+  } finally {
+    delete globalThis.window;
+  }
+});
+
+await runTest("BFF routes are explicit instead of catch-all proxy only", async () => {
+  const backendSource = await readFile(new URL("../src/lib/server/backend.ts", import.meta.url), "utf8");
+  const loginRouteSource = await readFile(new URL("../src/app/api/auth/login/route.ts", import.meta.url), "utf8");
+  const diaryRouteSource = await readFile(new URL("../src/app/api/diary/route.ts", import.meta.url), "utf8");
+
+  assert.match(backendSource, /proxyBackendRequest/);
+  assert.match(loginRouteSource, /\/api\/auth\/login/);
+  assert.match(diaryRouteSource, /\/api\/diary/);
+});
+
 await runTest("apiRequestJson surfaces 401 auth errors with redirect info", async () => {
   const mockFetch = async () =>
     new Response(JSON.stringify({ code: "AUTH_REQUIRED", message: "\ub85c\uadf8\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.", fields: [] }), {
@@ -454,10 +485,11 @@ await runTest("diary view logic maps revealed and locked entries to clear status
   assert.equal(locked.partnerStatusCopy, "\uc0c1\ub300\uac00 \ub2f5\ud558\uba74 \uc5f4\ub824\uc694.");
 });
 
-await runTest("diary panel source includes empty state action and does not render partner content", async () => {
+await runTest("diary panel source includes empty state action and renders only server-provided partner content", async () => {
   const source = await readFile(new URL("../src/features/diary/diary-entries-panel.tsx", import.meta.url), "utf8");
   assert.match(source, /오늘 질문으로 가기/);
-  assert.doesNotMatch(source, /partnerAnswer\.content/);
+  assert.match(source, /entry\.partnerAnswer\.content/);
+  assert.match(source, /viewModel\.partnerStatusCopy/);
 });
 
 console.log("frontend tests passed");

@@ -120,16 +120,28 @@ export function DiaryEntriesPanel() {
                 <h3 className="text-sm font-semibold text-stone-900">내 답변 상태</h3>
                 <StatusBadge tone={viewModel.myAnswerTone}>{viewModel.myAnswerBadge}</StatusBadge>
               </div>
-              <p className="mt-3 text-sm leading-6 text-stone-700">
-                {entry.myAnswerStatus === "ANSWERED" ? "내 답변은 기록에 남아 있어요." : "아직 내 답변을 남기지 않았어요."}
-              </p>
+              {entry.myAnswer ? (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs font-medium text-stone-500">{entry.myAnswer.displayName}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-stone-700">{entry.myAnswer.content}</p>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-stone-700">아직 내 답변을 남기지 않았어요.</p>
+              )}
             </div>
             <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-stone-900">상대 답변 상태</h3>
                 <StatusBadge tone={viewModel.partnerAnswerTone}>{viewModel.partnerAnswerBadge}</StatusBadge>
               </div>
-              <p className="mt-3 text-sm leading-6 text-stone-700">{viewModel.partnerStatusCopy}</p>
+              {entry.partnerAnswer ? (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs font-medium text-stone-500">{entry.partnerAnswer.displayName}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-stone-700">{entry.partnerAnswer.content}</p>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-stone-700">{viewModel.partnerStatusCopy}</p>
+              )}
             </div>
           </div>
           <p className="mt-4 text-sm text-stone-500">{viewModel.exportableCopy}</p>

@@ -78,9 +78,13 @@ class DiaryControllerIntegrationTest {
                 .andExpect(jsonPath("$.entries[0].dailyQuestionId").value(newer.getId()))
                 .andExpect(jsonPath("$.entries[0].partnerAnswerStatus").value("ANSWERED_LOCKED"))
                 .andExpect(jsonPath("$.entries[0].exportable").value(false))
-                .andExpect(jsonPath("$.entries[0].partnerAnswerContent").doesNotExist())
+                .andExpect(jsonPath("$.entries[0].partnerAnswer").doesNotExist())
                 .andExpect(jsonPath("$.entries[1].dailyQuestionId").value(older.getId()))
                 .andExpect(jsonPath("$.entries[1].partnerAnswerStatus").value("REVEALED"))
+                .andExpect(jsonPath("$.entries[1].myAnswer.displayName").value("민지"))
+                .andExpect(jsonPath("$.entries[1].myAnswer.content").value("내 답변"))
+                .andExpect(jsonPath("$.entries[1].partnerAnswer.displayName").value("도윤"))
+                .andExpect(jsonPath("$.entries[1].partnerAnswer.content").value("상대 답변"))
                 .andExpect(jsonPath("$.entries[1].exportable").value(true));
     }
 

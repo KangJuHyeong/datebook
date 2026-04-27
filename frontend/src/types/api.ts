@@ -121,6 +121,8 @@ export type DiaryEntry = {
   question: string;
   myAnswerStatus: string;
   partnerAnswerStatus: string;
+  myAnswer: ExportPreviewAnswer | null;
+  partnerAnswer: ExportPreviewAnswer | null;
   exportable: boolean;
 };
 

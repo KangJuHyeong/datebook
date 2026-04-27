@@ -10,6 +10,7 @@ import app.domain.Answer;
 import app.domain.CoupleMember;
 import app.domain.DailyQuestion;
 import app.domain.PartnerAnswerStatus;
+import app.dto.diary.DiaryAnswerResponse;
 import app.dto.diary.DiaryEntryResponse;
 import app.dto.diary.DiaryResponse;
 import app.repository.AnswerRepository;
@@ -81,6 +82,10 @@ public class DiaryService {
                 dailyQuestion.getQuestion().getContent(),
                 myAnswer == null ? "NOT_ANSWERED" : "ANSWERED",
                 partnerAnswerStatus.name(),
+                myAnswer == null ? null : new DiaryAnswerResponse(myAnswer.getUser().getDisplayName(), myAnswer.getContent()),
+                partnerAnswerStatus == PartnerAnswerStatus.REVEALED
+                        ? new DiaryAnswerResponse(partnerAnswer.getUser().getDisplayName(), partnerAnswer.getContent())
+                        : null,
                 myAnswer != null && partnerAnswer != null
         );
     }

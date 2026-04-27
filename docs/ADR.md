@@ -10,7 +10,7 @@
 
 **이유**: 페이지 라우팅, 레이아웃 구성, 클라이언트 인터랙션을 빠르게 만들 수 있고 TypeScript와 Tailwind CSS 조합으로 MVP UI를 안정적으로 구성할 수 있다.
 
-**트레이드오프**: Next.js API Route에 비즈니스 로직을 넣지 않는다. 프론트엔드는 Spring Boot API client 역할에 집중하므로 API 서버와의 CORS, 세션 쿠키 설정을 함께 관리해야 한다.
+**트레이드오프**: Next.js route handler에 비즈니스 로직을 넣지 않는다. 프론트엔드는 화면과 얇은 BFF/API client 역할에 집중하므로 Spring Boot API와의 세션 쿠키 전달, 에러 응답 전달 규칙을 함께 관리해야 한다.
 
 ### ADR-002: Spring Boot API 서버와 MySQL 선택
 **결정**: 백엔드는 Spring Boot, Java, Spring Data JPA를 사용하고 데이터베이스는 MySQL을 사용한다.
@@ -97,3 +97,10 @@
 **이유**: 프론트엔드와 백엔드가 분리된 구조에서는 API base URL, DB 접속 정보, CORS 허용 origin 같은 값이 환경마다 달라질 수 있다. 파일 기반 env 구성을 쓰면 기본값은 유지하면서 로컬 오버라이드를 명시적으로 관리할 수 있고, 이미 로컬 MySQL이 `3306`을 쓰는 환경에서도 Docker MySQL을 안전하게 함께 띄울 수 있다.
 
 **트레이드오프**: 실행 전에 `.env` 파일과 Docker 포트 구성을 함께 이해해야 하므로 초기 진입 장벽이 조금 높아진다. 대신 `application.yml` 기본값과 `.env.example`을 함께 두면 로컬 실행 경로가 문서화되고, 팀원이 같은 설정을 재현하기 쉬워진다.
+
+### ADR-014: Next.js BFF는 엔드포인트별 route handler로 구성
+**결정**: 브라우저는 같은 origin의 `/api/...`를 호출하고, Next.js `app/api/**/route.ts`가 Spring Boot `/api/...`로 요청을 전달한다. 공통 전달 로직은 `frontend/src/lib/server/backend.ts`에 둔다.
+
+**이유**: 브라우저 코드에서 Spring Boot base URL을 숨기고, 세션 쿠키 포함 요청과 다운로드 응답 전달을 Next.js 경계에서 일관되게 다룰 수 있다. catch-all 프록시 대신 엔드포인트별 route handler를 두면 auth, diary, export 같은 API 표면이 파일 구조에 명확히 드러난다.
+
+**트레이드오프**: Spring Boot endpoint가 늘어날 때 Next.js route handler 파일도 함께 추가해야 한다. 대신 BFF 파일은 단순 전달만 담당하고, 인증/권한/공개 규칙/주문 상태 전이는 계속 Spring Boot service에서 보장한다.

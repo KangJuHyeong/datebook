@@ -1,7 +1,7 @@
 # 아키텍처
 
 ## 개요
-하루 한 질문 교환일기는 Next.js 프론트엔드와 Spring Boot 백엔드를 분리한 로컬 MVP 웹 애플리케이션이다. Next.js는 화면 렌더링과 API client 역할을 맡고, Spring Boot는 인증, 도메인 로직, 데이터 접근, 주문/export 생성을 담당한다.
+하루 한 질문 교환일기는 Next.js 프론트엔드와 Spring Boot 백엔드를 분리한 로컬 MVP 웹 애플리케이션이다. Next.js는 화면 렌더링과 얇은 BFF/API client 역할을 맡고, Spring Boot는 인증, 도메인 로직, 데이터 접근, 주문/export 생성을 담당한다.
 
 ## 시스템 구성
 - Frontend: Next.js App Router, React, TypeScript, Tailwind CSS
@@ -19,7 +19,8 @@ frontend/
 ├── .env.local                # 로컬 프론트엔드 설정 (gitignore)
 ├── .env.example              # 프론트엔드 환경 변수 예시
 └── src/
-    ├── app/                  # App Router 페이지와 레이아웃
+    ├── app/                  # App Router 페이지, 레이아웃, BFF route handler
+    │   ├── api/              # endpoint별 Next.js BFF route handler
     │   ├── login/
     │   ├── signup/
     │   ├── couple/
@@ -29,7 +30,8 @@ frontend/
     ├── components/           # 재사용 UI 컴포넌트
     ├── features/             # auth, couple, today, diary, export 기능 단위 UI
     ├── lib/
-    │   └── api/              # Spring Boot API fetch client
+    │   ├── api/              # 브라우저/서버 공용 API fetch wrapper
+    │   └── server/           # BFF에서 Spring Boot로 전달하는 서버 전용 helper
     └── types/                # TypeScript 타입 정의
 ```
 
@@ -55,7 +57,8 @@ backend/
 ## 패턴
 - Frontend는 페이지 단위 라우팅을 App Router로 구성한다.
 - 인터랙션이 필요한 폼, 체크 선택, 답변 작성 UI는 Client Component로 만든다.
-- Next.js API Route에 도메인 로직을 넣지 않는다.
+- Next.js BFF route handler는 app/api/ 아래에 엔드포인트별로 두고, Spring Boot API로 요청을 전달한다.
+- Next.js BFF route handler에 도메인 로직을 넣지 않는다.
 - Spring Boot controller는 요청/응답 변환만 담당하고 핵심 판단은 service에 둔다.
 - service는 세션 사용자 조회, 커플 권한 검증, 상태 전이를 책임진다.
 - repository는 기본적으로 Spring Data JPA를 사용한다.
@@ -74,6 +77,8 @@ backend/
 사용자 입력
 → Next.js Client Component
 → lib/api fetch client, credentials 포함
+→ Next.js app/api BFF route handler
+→ lib/server backend proxy helper
 → Spring Boot REST API
 → Service에서 세션 사용자와 커플 권한 검증
 → Spring Data JPA
@@ -526,15 +531,24 @@ Response:
       "dailyQuestionId": 100,
       "date": "2026-04-22",
       "question": "오늘 가장 먼저 떠오른 서로의 모습은 무엇인가요?",
-        "myAnswerStatus": "ANSWERED",
-        "partnerAnswerStatus": "LOCKED",
-        "exportable": false
+      "myAnswerStatus": "ANSWERED",
+      "partnerAnswerStatus": "REVEALED",
+      "myAnswer": {
+        "displayName": "민지",
+        "content": "아침에 보내준 짧은 메시지가 생각났어."
+      },
+      "partnerAnswer": {
+        "displayName": "도윤",
+        "content": "퇴근길에 같이 걸었던 장면."
+      },
+      "exportable": true
     }
   ]
 }
 ```
 
 `exportable`은 현재 사용자의 커플에서 해당 DailyQuestion에 두 명 모두 답변했고 양쪽 답변이 공개 가능한 경우에만 true다.
+`myAnswer`는 현재 사용자가 답변한 경우에만 포함된다. `partnerAnswer`는 동시 공개 규칙에 따라 `partnerAnswerStatus`가 `REVEALED`인 경우에만 포함되며, 잠금 상태에서는 응답에 포함하지 않는다.
 
 ### POST /api/exports
 Request:

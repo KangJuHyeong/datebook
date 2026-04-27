@@ -8,6 +8,8 @@ public record DiaryEntryResponse(
         String question,
         String myAnswerStatus,
         String partnerAnswerStatus,
+        DiaryAnswerResponse myAnswer,
+        DiaryAnswerResponse partnerAnswer,
         boolean exportable
 ) {
 }

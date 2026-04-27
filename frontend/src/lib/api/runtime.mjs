@@ -1,4 +1,9 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+const BACKEND_API_BASE_URL =
+  process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+
+export function getApiBaseUrl() {
+  return typeof window === "undefined" ? BACKEND_API_BASE_URL : "";
+}
 
 function normalizeHeaders(headers = {}) {
   const normalized = new Headers(headers);
@@ -23,7 +28,7 @@ export class ApiError extends Error {
 }
 
 export function buildApiUrl(path) {
-  return `${API_BASE_URL}${path}`;
+  return `${getApiBaseUrl()}${path}`;
 }
 
 export function parseApiErrorPayload(payload, fallbackStatus = 500) {

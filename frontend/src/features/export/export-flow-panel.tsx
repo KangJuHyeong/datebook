@@ -12,7 +12,7 @@ import {
   downloadExportOrder,
   previewExportOrder,
 } from "@/lib/api/export";
-import type { CompleteExportResponse, DiaryEntry, ExportPreviewResponse } from "@/types/api";
+import type { CompleteExportResponse, DiaryEntry, ExportPreviewAnswer, ExportPreviewResponse } from "@/types/api";
 import {
   cancelExportSelection,
   getExportEntryViewModel,
@@ -335,6 +335,23 @@ export function ExportFlowPanel() {
                           {checked ? <StatusBadge tone="selected">선택됨</StatusBadge> : null}
                         </div>
                         <p className="text-sm leading-6 text-stone-700">{viewModel.availabilityDescription}</p>
+                        {entry.exportable ? (
+                          <div className="grid gap-3 md:grid-cols-2">
+                            {[entry.myAnswer, entry.partnerAnswer]
+                              .filter((answer): answer is ExportPreviewAnswer => Boolean(answer))
+                              .map((answer) => (
+                                <div
+                                  key={answer.displayName}
+                                  className="rounded-lg border border-stone-200 bg-stone-50 p-4"
+                                >
+                                  <p className="text-xs font-medium text-stone-500">{answer.displayName}</p>
+                                  <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-stone-700">
+                                    {answer.content}
+                                  </p>
+                                </div>
+                              ))}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </div>
