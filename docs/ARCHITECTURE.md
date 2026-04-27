@@ -28,7 +28,7 @@ frontend/
     │   ├── diary/
     │   └── export/
     ├── components/           # 재사용 UI 컴포넌트
-    ├── features/             # auth, couple, today, diary, export 기능 단위 UI
+    ├── features/             # 테스트 가능한 순수 로직 또는 여러 화면 공유 기능
     ├── lib/
     │   ├── api/              # 브라우저/서버 공용 API fetch wrapper
     │   └── server/           # BFF에서 Spring Boot로 전달하는 서버 전용 helper
@@ -56,7 +56,10 @@ backend/
 
 ## 패턴
 - Frontend는 페이지 단위 라우팅을 App Router로 구성한다.
-- 인터랙션이 필요한 폼, 체크 선택, 답변 작성 UI는 Client Component로 만든다.
+- `app/{route}/page.tsx`는 Server Component로 인증 가드, 라우팅 경계, 레이아웃 조립을 담당한다.
+- 인터랙션이 필요한 폼, 체크 선택, 답변 작성 UI는 `app/{route}/{route}-client.tsx` 같은 route-local Client Component로 만든다.
+- `features/**`는 화면 전용 panel/container가 아니라 테스트 가능한 순수 로직 또는 여러 화면에서 공유되는 기능에 사용한다.
+- 화면 전용 UI는 route가 소유하며, panel/container 계층은 필수 패턴으로 두지 않는다.
 - Next.js BFF route handler는 app/api/ 아래에 엔드포인트별로 두고, Spring Boot API로 요청을 전달한다.
 - Next.js BFF route handler에 도메인 로직을 넣지 않는다.
 - Spring Boot controller는 요청/응답 변환만 담당하고 핵심 판단은 service에 둔다.

@@ -104,3 +104,10 @@
 **이유**: 브라우저 코드에서 Spring Boot base URL을 숨기고, 세션 쿠키 포함 요청과 다운로드 응답 전달을 Next.js 경계에서 일관되게 다룰 수 있다. catch-all 프록시 대신 엔드포인트별 route handler를 두면 auth, diary, export 같은 API 표면이 파일 구조에 명확히 드러난다.
 
 **트레이드오프**: Spring Boot endpoint가 늘어날 때 Next.js route handler 파일도 함께 추가해야 한다. 대신 BFF 파일은 단순 전달만 담당하고, 인증/권한/공개 규칙/주문 상태 전이는 계속 Spring Boot service에서 보장한다.
+
+### ADR-015: Route-owned Client Component 구조 채택
+**결정**: CSR이 필요한 화면 전용 UI는 `app/{route}/{route}-client.tsx` 같은 route-local Client Component로 둔다. `app/{route}/page.tsx`는 Server Component로 인증 가드, 라우팅 경계, 레이아웃 조립을 담당한다.
+
+**이유**: MVP 규모에서는 route 폴더 안에서 SSR 경계와 CSR 화면을 함께 보는 편이 단순하다. 불필요한 panel/container 계층을 줄이고, 화면 소유권을 App Router route에 명확히 둔다.
+
+**트레이드오프**: route-local client 파일이 늘어날 수 있다. 대신 여러 화면에서 재사용되는 UI는 `components/**`로, 테스트 가능한 순수 로직이나 공유 기능은 `features/**`로 승격한다.

@@ -19,7 +19,7 @@ import {
   submitExportCompletion,
   submitExportSelection,
   toggleExportSelection,
-} from "./export-flow-logic.mjs";
+} from "@/features/export/export-flow-logic.mjs";
 
 type FlowStep = "select" | "preview" | "completed";
 type DownloadFormat = "json" | "text";
@@ -81,7 +81,7 @@ async function triggerDownload(exportRequestId: number, format: DownloadFormat) 
   window.URL.revokeObjectURL(objectUrl);
 }
 
-export function ExportFlowPanel() {
+export function ExportClient() {
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);

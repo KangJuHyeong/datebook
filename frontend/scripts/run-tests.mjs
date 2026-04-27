@@ -458,8 +458,8 @@ await runTest("submitTodayAnswer surfaces backend failures", async () => {
   });
 });
 
-await runTest("today panel source disables submit during save and shows success feedback", async () => {
-  const source = await readFile(new URL("../src/features/today/today-question-panel.tsx", import.meta.url), "utf8");
+await runTest("today client source disables submit during save and shows success feedback", async () => {
+  const source = await readFile(new URL("../src/app/today/today-client.tsx", import.meta.url), "utf8");
   assert.match(source, /disabled=\{saving \|\| Boolean\(validationError\)\}/);
   assert.match(source, /setSuccessMessage\(result\.successMessage\)/);
   assert.match(source, /beforeunload/);
@@ -485,8 +485,8 @@ await runTest("diary view logic maps revealed and locked entries to clear status
   assert.equal(locked.partnerStatusCopy, "\uc0c1\ub300\uac00 \ub2f5\ud558\uba74 \uc5f4\ub824\uc694.");
 });
 
-await runTest("diary panel source includes empty state action and renders only server-provided partner content", async () => {
-  const source = await readFile(new URL("../src/features/diary/diary-entries-panel.tsx", import.meta.url), "utf8");
+await runTest("diary client source includes empty state action and renders only server-provided partner content", async () => {
+  const source = await readFile(new URL("../src/app/diary/diary-client.tsx", import.meta.url), "utf8");
   assert.match(source, /오늘 질문으로 가기/);
   assert.match(source, /entry\.partnerAnswer\.content/);
   assert.match(source, /viewModel\.partnerStatusCopy/);

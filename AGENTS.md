@@ -18,7 +18,10 @@
 - CRITICAL: 백엔드 API 오류는 전역 예외 처리기에서 공통 JSON 형식으로 반환한다. controller에서 try/catch로 개별 오류 응답을 만들지 않는다.
 - CRITICAL: 사용자-facing UI 문구에서는 export 대신 주문, 기록 선택, 다운로드 용어를 사용한다. API, 코드, 파일명에서는 export 용어를 유지할 수 있다.
 - CRITICAL: 답변, 주문, 잠금, 오류 상태는 색상만으로 표현하지 않는다. 배지 텍스트, 안내 문구, aria 속성을 함께 제공한다.
-- Frontend 컴포넌트는 components/ 또는 features/ 아래에 두고, 브라우저 API 호출 래퍼는 lib/api/에 둔다.
+- Frontend 화면 전용 UI는 우선 `app/{route}/{route}-client.tsx`에 route-local Client Component로 둔다.
+- 재사용 UI 컴포넌트는 components/ 아래에 두고, features/는 테스트 가능한 순수 로직 또는 여러 화면에서 공유되는 기능에 사용한다.
+- features/ 아래에 새 화면 panel/container를 만들지 않는다.
+- 브라우저 API 호출 래퍼는 lib/api/에 둔다.
 - Next.js BFF route handler는 app/api/ 아래에 엔드포인트별로 두고, Spring Boot 전달 공통 로직은 lib/server/에 둔다. BFF에는 도메인 판단 로직을 넣지 않는다.
 - Backend 계층은 controller, service, repository, domain, dto, config로 분리한다.
 - 다른 커플의 질문, 답변, export 데이터에 접근할 수 없도록 모든 보호 API에서 현재 세션 사용자와 커플 소유권을 검증한다.

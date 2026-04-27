@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getDiaryEntries } from "@/lib/api/diary";
 import type { DiaryEntry } from "@/types/api";
-import { getDiaryEntryViewModel } from "./diary-view-logic.mjs";
+import { getDiaryEntryViewModel } from "@/features/diary/diary-view-logic.mjs";
 
 function DiarySkeleton() {
   return (
@@ -40,7 +40,7 @@ function DiaryEmptyState() {
   );
 }
 
-export function DiaryEntriesPanel() {
+export function DiaryClient() {
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();

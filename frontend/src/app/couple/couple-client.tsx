@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { createCouple, joinCouple } from "@/lib/api/couple";
-import { submitCreateInvite, submitJoinInvite } from "./couple-form-logic.mjs";
+import { submitCreateInvite, submitJoinInvite } from "@/features/couple/couple-form-logic.mjs";
 
 type CoupleFieldErrors = {
   inviteCode?: string;
@@ -24,7 +24,7 @@ function formatInviteExpiry(expiresAt: string) {
   }).format(new Date(expiresAt));
 }
 
-export function CoupleConnectPanel() {
+export function CoupleClient() {
   const router = useRouter();
   const [inviteCode, setInviteCode] = useState("");
   const [inviteState, setInviteState] = useState<InviteState | null>(null);

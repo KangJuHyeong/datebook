@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { createAnswer, getTodayQuestion, updateAnswer } from "@/lib/api/today";
 import type { TodayQuestionResponse } from "@/types/api";
-import { ANSWER_MAX_LENGTH, getTodayViewModel, submitTodayAnswer, validateAnswerContent } from "./today-form-logic.mjs";
+import {
+  ANSWER_MAX_LENGTH,
+  getTodayViewModel,
+  submitTodayAnswer,
+  validateAnswerContent,
+} from "@/features/today/today-form-logic.mjs";
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -37,7 +42,7 @@ function TodayQuestionSkeleton() {
   );
 }
 
-export function TodayQuestionPanel() {
+export function TodayClient() {
   const [todayQuestion, setTodayQuestion] = useState<TodayQuestionResponse | null>(null);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);

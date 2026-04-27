@@ -123,8 +123,8 @@ await runTest("submitExportCompletion and cancelExportSelection surface API stat
   assert.deepEqual(cancelled, { ok: true });
 });
 
-await runTest("export panel source supports disabled locked rows and completion-only downloads", async () => {
-  const source = await readFile(new URL("../src/features/export/export-flow-panel.tsx", import.meta.url), "utf8");
+await runTest("export client source supports disabled locked rows and completion-only downloads", async () => {
+  const source = await readFile(new URL("../src/app/export/export-client.tsx", import.meta.url), "utf8");
   assert.match(source, /role="checkbox"/);
   assert.match(source, /aria-disabled=\{!entry\.exportable\}/);
   assert.match(source, /event\.key === " " \|\| event\.key === "Spacebar"/);
