@@ -317,7 +317,7 @@ await runTest("today view model renders all four answer states", async () => {
   assert.equal(notAnswered.statusCopy, "\uc624\ub298\uc758 \ub2f5\ubcc0\uc744 \ub0a8\uaca8\ubcf4\uc138\uc694.");
   assert.equal(myAnsweredWaiting.statusCopy, "\ub0b4 \ub2f5\ubcc0\uc740 \uc800\uc7a5\ub410\uc5b4\uc694. \uc0c1\ub300\uac00 \ub2f5\ud558\uba74 \ud568\uaed8 \uc5f4\ub824\uc694.");
   assert.equal(partnerAnsweredLocked.statusCopy, "\uc0c1\ub300\uac00 \ub2f5\ubcc0\uc744 \ub9c8\ucce4\uc5b4\uc694. \ub0b4 \ub2f5\ubcc0\uc744 \ub0a8\uae30\uba74 \ud568\uaed8 \uc5f4\ub824\uc694.");
-  assert.equal(bothAnswered.statusCopy, "\ub450 \uc0ac\ub78c\uc758 \ub2f5\ubcc0\uc774 \uc5f4\ub838\uc5b4\uc694.");
+  assert.equal(bothAnswered.statusCopy, "\ub450 \uc0ac\ub78c\uc758 \ub2f5\ubcc0\uc774 \ubaa8\ub450 \uc5f4\ub838\uc5b4\uc694.");
 });
 
 await runTest("today view model never exposes locked partner content", async () => {

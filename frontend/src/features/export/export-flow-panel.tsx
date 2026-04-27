@@ -289,6 +289,7 @@ export function ExportFlowPanel() {
               return (
                 <article key={entry.dailyQuestionId} className="rounded-lg border border-stone-200 bg-white p-5">
                   <div
+                    data-testid={`export-entry-${entry.dailyQuestionId}`}
                     role="checkbox"
                     aria-checked={checked}
                     aria-disabled={!entry.exportable}
@@ -353,7 +354,11 @@ export function ExportFlowPanel() {
                       : "둘 다 답한 기록만 주문할 수 있어요."}
                   </p>
                 </div>
-                <Button onClick={handleCreateOrder} disabled={!selectedCount || !exportableEntries.length || submitting}>
+                <Button
+                  onClick={handleCreateOrder}
+                  disabled={!selectedCount || !exportableEntries.length || submitting}
+                  data-testid="create-export-order"
+                >
                   {submitting ? "주문 준비 중..." : "주문 신청"}
                 </Button>
               </div>
@@ -406,7 +411,7 @@ export function ExportFlowPanel() {
                 <Button variant="text" onClick={() => void handleCancel("reset")} disabled={submitting}>
                   취소
                 </Button>
-                <Button onClick={handleCompleteOrder} disabled={submitting}>
+                <Button onClick={handleCompleteOrder} disabled={submitting} data-testid="complete-export-order">
                   {submitting ? "주문 완료 중..." : "주문 완료"}
                 </Button>
               </div>
@@ -426,10 +431,19 @@ export function ExportFlowPanel() {
               </p>
             </div>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <Button onClick={() => void handleDownload("json")} disabled={downloadingFormat !== null}>
+              <Button
+                onClick={() => void handleDownload("json")}
+                disabled={downloadingFormat !== null}
+                data-testid="download-json"
+              >
                 {downloadingFormat === "json" ? "JSON 다운로드 중..." : "JSON 다운로드"}
               </Button>
-              <Button variant="secondary" onClick={() => void handleDownload("text")} disabled={downloadingFormat !== null}>
+              <Button
+                variant="secondary"
+                onClick={() => void handleDownload("text")}
+                disabled={downloadingFormat !== null}
+                data-testid="download-text"
+              >
                 {downloadingFormat === "text" ? "텍스트 다운로드 중..." : "텍스트 다운로드"}
               </Button>
             </div>

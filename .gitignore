@@ -15,6 +15,7 @@ build/
 .pytest-run/
 .pytest-pass-20260423/
 .test-artifacts/
+frontend/e2e-artifacts/
 pytest-cache-files-*/
 pytest-tmp/
 dist/

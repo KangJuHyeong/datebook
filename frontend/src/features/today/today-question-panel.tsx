@@ -182,6 +182,7 @@ export function TodayQuestionPanel() {
               <textarea
                 id="today-answer"
                 name="content"
+                data-testid="today-answer"
                 value={draft}
                 onChange={(event) => {
                   setDraft(event.target.value);
@@ -217,7 +218,7 @@ export function TodayQuestionPanel() {
             {hasUnsavedChanges ? (
               <p className="text-sm text-stone-500">저장하지 않은 변경이 있어요. 페이지를 나가면 브라우저가 한 번 더 확인해요.</p>
             ) : null}
-            <Button type="submit" disabled={saving || Boolean(validationError)}>
+            <Button type="submit" disabled={saving || Boolean(validationError)} data-testid="save-answer">
               {saving ? "저장 중..." : todayQuestion.myAnswer ? "답변 수정하기" : "답변 저장하기"}
             </Button>
           </form>

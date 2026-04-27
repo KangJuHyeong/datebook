@@ -109,7 +109,9 @@ export function CoupleConnectPanel() {
             <div className="space-y-3 rounded-lg border border-stone-200 bg-stone-50 p-4" aria-live="polite">
               <div className="space-y-1">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Invite Code</p>
-                <p className="font-mono text-xl text-stone-950">{inviteState.inviteCode}</p>
+                <p className="font-mono text-xl text-stone-950" data-testid="invite-code-value">
+                  {inviteState.inviteCode}
+                </p>
               </div>
               <p className="text-sm text-stone-700">만료 시간: {formattedExpiry}</p>
               <p className="text-sm text-stone-500">상대가 이 코드를 입력하면 오늘 질문으로 함께 이동할 수 있어요.</p>
@@ -127,7 +129,12 @@ export function CoupleConnectPanel() {
               {createError}
             </p>
           ) : null}
-          <Button type="button" onClick={handleCreateInvite} disabled={creating || Boolean(inviteState)}>
+          <Button
+            type="button"
+            onClick={handleCreateInvite}
+            disabled={creating || Boolean(inviteState)}
+            data-testid="create-invite"
+          >
             {creating ? "코드 만드는 중..." : inviteState ? "코드 생성 완료" : "코드 만들기"}
           </Button>
         </div>
@@ -148,13 +155,14 @@ export function CoupleConnectPanel() {
             value={inviteCode}
             onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
             error={joinErrors.inviteCode}
+            data-testid="invite-code-input"
           />
           {joinError ? (
             <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
               {joinError}
             </p>
           ) : null}
-          <Button type="submit" disabled={joining}>
+          <Button type="submit" disabled={joining} data-testid="join-invite">
             {joining ? "참여 중..." : "참여하기"}
           </Button>
         </form>

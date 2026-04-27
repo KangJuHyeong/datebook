@@ -120,7 +120,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           </p>
         ) : null}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" disabled={pending} data-testid={`${mode}-submit`}>
             {pending ? copy.pendingLabel : copy.submitLabel}
           </Button>
           <Link className="text-sm font-medium text-stone-500 hover:text-stone-900" href={copy.alternateHref}>

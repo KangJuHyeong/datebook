@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "node scripts/verify-scaffold.mjs build",
     "lint": "node scripts/verify-scaffold.mjs lint",
-    "test": "node scripts/run-tests.mjs && node scripts/run-export-tests.mjs"
+    "test": "node scripts/run-tests.mjs && node scripts/run-export-tests.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "node scripts/run-e2e-with-report.mjs"
   },
   "dependencies": {
     "next": "16.1.6",
@@ -14,6 +17,7 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/react": "19.2.14",
     "autoprefixer": "10.4.21",
     "postcss": "8.5.8",
