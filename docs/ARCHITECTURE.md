@@ -62,6 +62,7 @@ backend/
 - 화면 전용 UI는 route가 소유하며, panel/container 계층은 필수 패턴으로 두지 않는다.
 - Next.js BFF route handler는 app/api/ 아래에 엔드포인트별로 두고, Spring Boot API로 요청을 전달한다.
 - Next.js BFF route handler에 도메인 로직을 넣지 않는다.
+- Next.js BFF 공통 프록시는 요청/응답 헤더를 allowlist 방식으로 전달한다. 기본 허용 요청 헤더는 `accept`, `content-type`, `cookie`, `x-xsrf-token`이며, 응답은 `content-type`, `content-disposition`, `set-cookie`, `cache-control`처럼 필요한 헤더만 전달한다.
 - Spring Boot controller는 요청/응답 변환만 담당하고 핵심 판단은 service에 둔다.
 - service는 세션 사용자 조회, 커플 권한 검증, 상태 전이를 책임진다.
 - repository는 기본적으로 Spring Data JPA를 사용한다.
@@ -80,8 +81,9 @@ backend/
 사용자 입력
 → Next.js Client Component
 → lib/api fetch client, credentials 포함
+→ 상태 변경 요청이면 /api/auth/csrf 조회 후 X-XSRF-TOKEN 헤더 포함
 → Next.js app/api BFF route handler
-→ lib/server backend proxy helper
+→ lib/server backend proxy helper, allowlist 헤더만 전달
 → Spring Boot REST API
 → Service에서 세션 사용자와 커플 권한 검증
 → Spring Data JPA
@@ -95,9 +97,11 @@ backend/
 이메일/비밀번호 로그인 요청
 → Spring Boot가 비밀번호 해시 검증
 → 로그인 성공 시 서버 세션 생성
+→ 세션 ID 재발급
 → 세션에 userId 저장
 → 브라우저에 HttpOnly 세션 쿠키 저장
 → 이후 Next.js fetch 요청은 credentials: "include"로 쿠키 전송
+→ 상태 변경 요청은 CSRF 쿠키/토큰과 X-XSRF-TOKEN 헤더를 함께 전송
 → Spring Boot가 세션의 userId로 현재 사용자 식별
 ```
 
@@ -107,6 +111,13 @@ backend/
 - Secure: 로컬 MVP에서는 false, HTTPS 배포 시 true로 전환
 - 세션 저장소: MVP는 Spring 기본 in-memory 세션 사용
 - 로그아웃 시 서버 세션을 invalidate한다.
+
+CSRF 정책:
+- Spring Security CSRF 보호를 활성화한다.
+- CSRF 토큰은 `GET /api/auth/csrf`에서 발급하며 응답에는 `headerName`, `parameterName`, `token`을 포함한다.
+- 브라우저 API client는 `POST`, `PUT`, `PATCH`, `DELETE` 요청 전에 `XSRF-TOKEN` 쿠키를 읽거나 `/api/auth/csrf`를 호출해 토큰을 확보한다.
+- 상태 변경 요청은 `X-XSRF-TOKEN` 헤더를 포함해야 한다.
+- CSRF 실패를 포함한 Spring Security 403 응답도 공통 JSON 오류 형식으로 반환한다.
 
 ## 주요 도메인 모델
 - User: 이메일, 비밀번호 해시, 표시 이름을 가진 사용자

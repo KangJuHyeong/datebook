@@ -1,5 +1,6 @@
 package app.controller;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -85,6 +86,7 @@ class ExportControllerIntegrationTest {
         answerRepository.saveAndFlush(new Answer(lockedQuestion, me, "내 답변만 있음"));
 
         mockMvc.perform(post("/api/exports")
+                        .with(csrf())
                         .session(authenticatedSession(me.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -96,6 +98,7 @@ class ExportControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
 
         mockMvc.perform(post("/api/exports")
+                        .with(csrf())
                         .session(authenticatedSession(me.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -107,6 +110,7 @@ class ExportControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value("EXPORT_ITEM_INVALID"));
 
         mockMvc.perform(post("/api/exports")
+                        .with(csrf())
                         .session(authenticatedSession(me.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -132,6 +136,7 @@ class ExportControllerIntegrationTest {
         answerRepository.saveAndFlush(new Answer(second, partner, "둘째 상대 답변"));
 
         MvcResult createResult = mockMvc.perform(post("/api/exports")
+                        .with(csrf())
                         .session(authenticatedSession(me.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -146,6 +151,7 @@ class ExportControllerIntegrationTest {
         Long exportRequestId = extractExportRequestId(createResult);
 
         mockMvc.perform(post("/api/exports/{exportRequestId}/preview", exportRequestId)
+                        .with(csrf())
                         .session(authenticatedSession(me.getId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PREVIEWED"))
@@ -173,6 +179,7 @@ class ExportControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value("EXPORT_NOT_COMPLETED"));
 
         mockMvc.perform(put("/api/answers/{answerId}", mySecondAnswer.getId())
+                        .with(csrf())
                         .session(authenticatedSession(me.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -183,6 +190,7 @@ class ExportControllerIntegrationTest {
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/exports/{exportRequestId}/complete", exportRequestId)
+                        .with(csrf())
                         .session(authenticatedSession(me.getId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
@@ -222,6 +230,7 @@ class ExportControllerIntegrationTest {
                 .getContentAsString();
 
         mockMvc.perform(put("/api/answers/{answerId}", mySecondAnswer.getId())
+                        .with(csrf())
                         .session(authenticatedSession(me.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -249,6 +258,7 @@ class ExportControllerIntegrationTest {
                 .andExpect(jsonPath("$.entries[1].answers[0].content").value("둘째 내 답변"));
 
         mockMvc.perform(delete("/api/exports/{exportRequestId}", exportRequestId)
+                        .with(csrf())
                         .session(authenticatedSession(me.getId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.exportRequestId").value(exportRequestId))
@@ -271,6 +281,7 @@ class ExportControllerIntegrationTest {
         answerRepository.saveAndFlush(new Answer(dailyQuestion, partner, "상대 답변"));
 
         MvcResult createResult = mockMvc.perform(post("/api/exports")
+                        .with(csrf())
                         .session(authenticatedSession(me.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -284,6 +295,7 @@ class ExportControllerIntegrationTest {
         Long exportRequestId = extractExportRequestId(createResult);
 
         mockMvc.perform(post("/api/exports/{exportRequestId}/cancel", exportRequestId)
+                        .with(csrf())
                         .session(authenticatedSession(me.getId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));

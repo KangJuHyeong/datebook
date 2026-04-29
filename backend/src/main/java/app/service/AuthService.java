@@ -10,6 +10,7 @@ import app.dto.auth.SignupRequest;
 import app.dto.auth.SignupResponse;
 import app.repository.CoupleMemberRepository;
 import app.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class AuthService {
     }
 
     @Transactional
-    public SignupResponse signup(SignupRequest request, HttpSession session) {
+    public SignupResponse signup(SignupRequest request, HttpServletRequest servletRequest) {
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "이미 사용 중인 이메일입니다.");
         }
@@ -47,17 +48,19 @@ public class AuthService {
                 request.displayName()
         ));
 
+        HttpSession session = rotateSession(servletRequest);
         session.setAttribute(SESSION_USER_ID, savedUser.getId());
 
         return new SignupResponse(savedUser.getId(), savedUser.getEmail(), savedUser.getDisplayName());
     }
 
     @Transactional
-    public AuthUserResponse login(LoginRequest request, HttpSession session) {
+    public AuthUserResponse login(LoginRequest request, HttpServletRequest servletRequest) {
         User user = userRepository.findByEmail(request.email())
                 .filter(foundUser -> passwordEncoder.matches(request.password(), foundUser.getPasswordHash()))
                 .orElseThrow(() -> new BusinessException(ErrorCode.LOGIN_FAILED));
 
+        HttpSession session = rotateSession(servletRequest);
         session.setAttribute(SESSION_USER_ID, user.getId());
 
         return toAuthUserResponse(user);
@@ -82,5 +85,11 @@ public class AuthService {
                 .orElse(null);
 
         return new AuthUserResponse(user.getId(), user.getEmail(), user.getDisplayName(), coupleId);
+    }
+
+    private HttpSession rotateSession(HttpServletRequest servletRequest) {
+        HttpSession session = servletRequest.getSession();
+        servletRequest.changeSessionId();
+        return session;
     }
 }

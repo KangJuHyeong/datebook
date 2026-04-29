@@ -1,5 +1,8 @@
 package app.config;
 
+import app.common.error.ErrorCode;
+import app.common.error.ErrorResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -20,12 +24,25 @@ public class SecurityConfig {
     private String allowedOrigin;
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository()))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .exceptionHandling(exception -> exception.accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(ErrorCode.FORBIDDEN.getStatus().value());
+                    response.setContentType("application/json;charset=UTF-8");
+                    objectMapper.writeValue(response.getWriter(), ErrorResponse.of(ErrorCode.FORBIDDEN));
+                }))
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
         return http.build();
+    }
+
+    @Bean
+    CookieCsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setHeaderName("X-XSRF-TOKEN");
+        repository.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
+        return repository;
     }
 
     @Bean

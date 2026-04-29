@@ -11,6 +11,8 @@
 ## 아키텍처 규칙
 - CRITICAL: Next.js는 UI와 Spring Boot API client/BFF 역할만 맡는다. 비즈니스 로직은 Spring Boot API에 둔다.
 - CRITICAL: 인증은 세션 쿠키 기반으로 처리한다. 프론트엔드 fetch 요청은 credentials 포함을 기본으로 한다.
+- CRITICAL: 상태 변경 API는 Spring Security CSRF 보호를 통과해야 한다. 프론트엔드는 unsafe method 요청 전에 `/api/auth/csrf`를 통해 토큰을 확보하고 `X-XSRF-TOKEN` 헤더로 전달한다.
+- CRITICAL: 로그인/회원가입 성공 시 세션 ID를 재발급해 세션 고정 공격을 방지한다.
 - CRITICAL: 런타임 AI 질문 생성은 MVP에서 구현하지 않는다. 초기 질문은 seed 데이터로 MySQL에 저장한다.
 - CRITICAL: 답변 공개는 동시 공개 규칙을 따른다. 상대가 아직 답하지 않았으면 상대 답변 내용은 절대 내려주지 않는다.
 - CRITICAL: 주문은 주문 신청, 주문 미리보기, 주문 완료, 다운로드 순서로만 진행한다. 주문 완료 전에는 다운로드를 제공하지 않는다.
@@ -24,6 +26,7 @@
 - features/ 아래에 새 화면 panel/container를 만들지 않는다.
 - 브라우저 API 호출 래퍼는 lib/api/에 둔다.
 - Next.js BFF route handler는 app/api/ 아래에 엔드포인트별로 두고, Spring Boot 전달 공통 로직은 lib/server/에 둔다. BFF에는 도메인 판단 로직을 넣지 않는다.
+- Next.js BFF는 요청/응답 헤더를 allowlist 방식으로만 전달한다. 쿠키, content-type, accept, CSRF 헤더, 다운로드에 필요한 응답 헤더처럼 명시된 값만 프록시한다.
 - Backend 계층은 controller, service, repository, domain, dto, config로 분리한다.
 - 다른 커플의 질문, 답변, export 데이터에 접근할 수 없도록 모든 보호 API에서 현재 세션 사용자와 커플 소유권을 검증한다.
 

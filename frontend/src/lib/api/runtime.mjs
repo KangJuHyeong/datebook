@@ -1,6 +1,10 @@
 const BACKEND_API_BASE_URL =
   process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
+const CSRF_COOKIE_NAME = "XSRF-TOKEN";
+const CSRF_HEADER_NAME = "X-XSRF-TOKEN";
+const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
 export function getApiBaseUrl() {
   return typeof window === "undefined" ? BACKEND_API_BASE_URL : "";
 }
@@ -29,6 +33,69 @@ export class ApiError extends Error {
 
 export function buildApiUrl(path) {
   return `${getApiBaseUrl()}${path}`;
+}
+
+function isUnsafeMethod(method = "GET") {
+  return UNSAFE_METHODS.has(method.toUpperCase());
+}
+
+function readCookie(name) {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const encodedName = `${encodeURIComponent(name)}=`;
+  const cookie = document.cookie
+    .split("; ")
+    .find((part) => part.startsWith(encodedName));
+
+  return cookie ? decodeURIComponent(cookie.slice(encodedName.length)) : null;
+}
+
+async function fetchCsrfToken(customFetch) {
+  const response = await customFetch(buildApiUrl("/api/auth/csrf"), {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  const text = await response.text();
+  const payload = parseJsonOrNull(text);
+
+  if (!response.ok) {
+    const error = parseApiErrorPayload(payload, response.status);
+    throw new ApiError(response.status, error, getErrorHandlingOptions(response.status, error.code));
+  }
+
+  return payload?.token ?? null;
+}
+
+async function ensureCsrfHeader(headers, method, customFetch) {
+  if (headers.has(CSRF_HEADER_NAME) || !isUnsafeMethod(method) || typeof window === "undefined") {
+    return;
+  }
+
+  let token = readCookie(CSRF_COOKIE_NAME);
+  if (!token) {
+    token = await fetchCsrfToken(customFetch);
+  }
+
+  if (token) {
+    headers.set(CSRF_HEADER_NAME, token);
+  }
+}
+
+function parseJsonOrNull(text) {
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 export function parseApiErrorPayload(payload, fallbackStatus = 500) {
@@ -61,6 +128,7 @@ export function getErrorHandlingOptions(status, errorCode) {
 
 export async function apiFetch(path, init = {}, customFetch = fetch) {
   const headers = normalizeHeaders(init.headers);
+  const method = init.method ?? "GET";
   const requestInit = {
     ...init,
     credentials: "include",
@@ -71,13 +139,15 @@ export async function apiFetch(path, init = {}, customFetch = fetch) {
     headers.set("Content-Type", "application/json");
   }
 
+  await ensureCsrfHeader(headers, method, customFetch);
+
   return customFetch(buildApiUrl(path), requestInit);
 }
 
 export async function apiRequestJson(path, init = {}, customFetch = fetch) {
   const response = await apiFetch(path, init, customFetch);
   const text = await response.text();
-  const payload = text ? JSON.parse(text) : null;
+  const payload = parseJsonOrNull(text);
 
   if (!response.ok) {
     const error = parseApiErrorPayload(payload, response.status);

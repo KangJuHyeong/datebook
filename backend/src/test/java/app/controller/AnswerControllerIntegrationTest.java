@@ -1,5 +1,6 @@
 package app.controller;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -75,6 +76,7 @@ class AnswerControllerIntegrationTest {
         answerRepository.saveAndFlush(new Answer(dailyQuestion, user, "기존 답변"));
 
         mockMvc.perform(post("/api/answers")
+                        .with(csrf())
                         .session(authenticatedSession(user.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -110,6 +112,7 @@ class AnswerControllerIntegrationTest {
         Answer partnerAnswer = answerRepository.saveAndFlush(new Answer(dailyQuestion, partner, "상대 답변"));
 
         mockMvc.perform(put("/api/answers/{answerId}", myAnswer.getId())
+                        .with(csrf())
                         .session(authenticatedSession(me.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -121,6 +124,7 @@ class AnswerControllerIntegrationTest {
                 .andExpect(jsonPath("$.content").value("수정한 내 답변"));
 
         mockMvc.perform(put("/api/answers/{answerId}", partnerAnswer.getId())
+                        .with(csrf())
                         .session(authenticatedSession(me.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

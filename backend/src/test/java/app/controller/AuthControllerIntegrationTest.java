@@ -1,6 +1,7 @@
 package app.controller;
 
 import static org.hamcrest.Matchers.empty;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -52,6 +53,7 @@ class AuthControllerIntegrationTest {
     @DisplayName("회원가입 성공 시 세션이 생성되고 사용자 정보를 반환한다")
     void signupCreatesSession() throws Exception {
         mockMvc.perform(post("/api/auth/signup")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -76,6 +78,7 @@ class AuthControllerIntegrationTest {
         userRepository.saveAndFlush(new User("duplicate@example.com", "hash", "기존"));
 
         mockMvc.perform(post("/api/auth/signup")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -93,6 +96,7 @@ class AuthControllerIntegrationTest {
     @DisplayName("회원가입 validation 오류는 필드 정보와 함께 반환한다")
     void signupValidatesRequestFields() throws Exception {
         mockMvc.perform(post("/api/auth/signup")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -115,6 +119,7 @@ class AuthControllerIntegrationTest {
         coupleMemberRepository.saveAndFlush(new CoupleMember(couple, user, java.time.LocalDateTime.now()));
 
         mockMvc.perform(post("/api/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -133,6 +138,7 @@ class AuthControllerIntegrationTest {
     @DisplayName("로그인 실패는 이메일 존재 여부를 드러내지 않는다")
     void loginFailureUsesGenericMessage() throws Exception {
         mockMvc.perform(post("/api/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -168,12 +174,30 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("CSRF 토큰이 없는 상태 변경 요청은 공통 JSON 오류를 반환한다")
+    void unsafeRequestsRequireCsrfToken() throws Exception {
+        mockMvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.fields", empty()));
+    }
+
+    @Test
+    @DisplayName("CSRF 토큰 조회는 헤더 이름과 토큰을 반환한다")
+    void csrfReturnsToken() throws Exception {
+        mockMvc.perform(get("/api/auth/csrf"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.headerName").value("X-XSRF-TOKEN"))
+                .andExpect(jsonPath("$.token").isString());
+    }
+
+    @Test
     @DisplayName("로그아웃은 세션을 무효화하고 성공 응답을 반환한다")
     void logoutInvalidatesSession() throws Exception {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("userId", 1L);
 
-        mockMvc.perform(post("/api/auth/logout").session(session))
+        mockMvc.perform(post("/api/auth/logout").with(csrf()).session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 

@@ -1,5 +1,6 @@
 package app.controller;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -58,7 +59,7 @@ class CoupleControllerIntegrationTest {
         User user = userRepository.saveAndFlush(new User("create@example.com", passwordEncoder.encode("password123"), "민지"));
         MockHttpSession session = authenticatedSession(user.getId());
 
-        mockMvc.perform(post("/api/couples").session(session))
+        mockMvc.perform(post("/api/couples").with(csrf()).session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.coupleId").isNumber())
                 .andExpect(jsonPath("$.inviteCode").isString())
@@ -76,7 +77,7 @@ class CoupleControllerIntegrationTest {
         Couple couple = coupleRepository.saveAndFlush(new Couple());
         coupleMemberRepository.saveAndFlush(new CoupleMember(couple, user, LocalDateTime.of(2026, 4, 24, 0, 0)));
 
-        mockMvc.perform(post("/api/couples").session(authenticatedSession(user.getId())))
+        mockMvc.perform(post("/api/couples").with(csrf()).session(authenticatedSession(user.getId())))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("ALREADY_IN_COUPLE"));
     }
@@ -84,7 +85,7 @@ class CoupleControllerIntegrationTest {
     @Test
     @DisplayName("POST /api/couples 는 미인증 요청에 401을 반환한다")
     void createCoupleRequiresAuthentication() throws Exception {
-        mockMvc.perform(post("/api/couples"))
+        mockMvc.perform(post("/api/couples").with(csrf()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"));
     }
@@ -100,6 +101,7 @@ class CoupleControllerIntegrationTest {
         inviteCodeRepository.saveAndFlush(new InviteCode(couple, "A1B2C3D4", nowUtc.plusHours(24)));
 
         mockMvc.perform(post("/api/couples/join")
+                        .with(csrf())
                         .session(authenticatedSession(joiner.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -135,6 +137,7 @@ class CoupleControllerIntegrationTest {
         inviteCodeRepository.saveAndFlush(used);
 
         mockMvc.perform(post("/api/couples/join")
+                        .with(csrf())
                         .session(authenticatedSession(joiner.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -146,6 +149,7 @@ class CoupleControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value("INVITE_CODE_INVALID"));
 
         mockMvc.perform(post("/api/couples/join")
+                        .with(csrf())
                         .session(authenticatedSession(joiner.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -157,6 +161,7 @@ class CoupleControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value("INVITE_CODE_INVALID"));
 
         mockMvc.perform(post("/api/couples/join")
+                        .with(csrf())
                         .session(authenticatedSession(joiner.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -187,6 +192,7 @@ class CoupleControllerIntegrationTest {
         inviteCodeRepository.saveAndFlush(new InviteCode(fullCouple, "FULL0001", nowUtc.plusHours(24)));
 
         mockMvc.perform(post("/api/couples/join")
+                        .with(csrf())
                         .session(authenticatedSession(extra.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -198,6 +204,7 @@ class CoupleControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value("COUPLE_FULL"));
 
         mockMvc.perform(post("/api/couples/join")
+                        .with(csrf())
                         .session(authenticatedSession(joinedUser.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -213,6 +220,7 @@ class CoupleControllerIntegrationTest {
     @DisplayName("POST /api/couples/join 은 미인증 요청에 401을 반환한다")
     void joinCoupleRequiresAuthentication() throws Exception {
         mockMvc.perform(post("/api/couples/join")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

@@ -20,6 +20,7 @@ import app.dto.auth.SignupRequest;
 import app.dto.auth.SignupResponse;
 import app.repository.CoupleMemberRepository;
 import app.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,9 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
+    private HttpServletRequest servletRequest;
+
+    @Mock
     private HttpSession session;
 
     @InjectMocks
@@ -58,12 +62,14 @@ class AuthServiceTest {
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(request.password())).thenReturn("encoded-password");
         when(userRepository.save(any(User.class))).thenReturn(persistedUser);
+        when(servletRequest.getSession()).thenReturn(session);
 
-        SignupResponse response = authService.signup(request, session);
+        SignupResponse response = authService.signup(request, servletRequest);
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
         assertThat(userCaptor.getValue().getPasswordHash()).isEqualTo("encoded-password");
+        verify(servletRequest).changeSessionId();
         verify(session).setAttribute(AuthService.SESSION_USER_ID, 1L);
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.email()).isEqualTo("user@example.com");
@@ -76,7 +82,7 @@ class AuthServiceTest {
         SignupRequest request = new SignupRequest("user@example.com", "password123", "민지");
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(new User("user@example.com", "hash", "기존")));
 
-        assertThatThrownBy(() -> authService.signup(request, session))
+        assertThatThrownBy(() -> authService.signup(request, servletRequest))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.VALIDATION_ERROR);
@@ -95,9 +101,11 @@ class AuthServiceTest {
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "stored-hash")).thenReturn(true);
         when(coupleMemberRepository.findByUser_Id(user.getId())).thenReturn(Optional.of(coupleMember));
+        when(servletRequest.getSession()).thenReturn(session);
 
-        AuthUserResponse response = authService.login(new LoginRequest("user@example.com", "password123"), session);
+        AuthUserResponse response = authService.login(new LoginRequest("user@example.com", "password123"), servletRequest);
 
+        verify(servletRequest).changeSessionId();
         verify(session).setAttribute(AuthService.SESSION_USER_ID, user.getId());
         assertThat(response.email()).isEqualTo("user@example.com");
         assertThat(response.coupleId()).isEqualTo(10L);
@@ -108,7 +116,7 @@ class AuthServiceTest {
     void loginRejectsInvalidCredentials() {
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> authService.login(new LoginRequest("user@example.com", "password123"), session))
+        assertThatThrownBy(() -> authService.login(new LoginRequest("user@example.com", "password123"), servletRequest))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.LOGIN_FAILED);

@@ -91,6 +91,59 @@ await runTest("api runtime uses same-origin BFF paths in the browser", async () 
   }
 });
 
+await runTest("apiRequestJson fetches and sends CSRF token for browser mutations", async () => {
+  globalThis.window = {};
+  globalThis.document = { cookie: "" };
+
+  try {
+    const calls = [];
+    const mockFetch = async (url, init) => {
+      calls.push({ url, init });
+      if (url === "/api/auth/csrf") {
+        return new Response(JSON.stringify({ token: "csrf-token" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    };
+
+    const payload = await apiRequestJson("/api/answers", {
+      method: "POST",
+      body: JSON.stringify({ dailyQuestionId: 1, content: "\ub2f5\ubcc0" }),
+    }, mockFetch);
+
+    assert.deepEqual(payload, { ok: true });
+    assert.equal(calls[0].url, "/api/auth/csrf");
+    assert.equal(calls[1].url, "/api/answers");
+    assert.equal(calls[1].init.headers.get("X-XSRF-TOKEN"), "csrf-token");
+  } finally {
+    delete globalThis.window;
+    delete globalThis.document;
+  }
+});
+
+await runTest("apiRequestJson normalizes non-JSON error responses", async () => {
+  const mockFetch = async () =>
+    new Response("<html>bad gateway</html>", {
+      status: 502,
+      headers: { "Content-Type": "text/html" },
+    });
+
+  await expectRejects(
+    () => apiRequestJson("/api/diary", { method: "GET" }, mockFetch),
+    (error) => {
+      assert.ok(error instanceof ApiError);
+      assert.equal(error.status, 502);
+      assert.equal(error.code, "INTERNAL_ERROR");
+    },
+  );
+});
+
 await runTest("BFF routes are explicit instead of catch-all proxy only", async () => {
   const backendSource = await readFile(new URL("../src/lib/server/backend.ts", import.meta.url), "utf8");
   const loginRouteSource = await readFile(new URL("../src/app/api/auth/login/route.ts", import.meta.url), "utf8");
