@@ -9,20 +9,32 @@ import {
   cancelExportOrder,
   completeExportOrder,
   createExportOrder,
+  deleteExportOrder,
   downloadExportOrder,
+  getExportOrderDetail,
+  getExportOrders,
   previewExportOrder,
 } from "@/lib/api/export";
-import type { CompleteExportResponse, DiaryEntry, ExportPreviewAnswer, ExportPreviewResponse } from "@/types/api";
+import type {
+  CompleteExportResponse,
+  DiaryEntry,
+  ExportOrderDetailResponse,
+  ExportOrderSummary,
+  ExportPreviewResponse,
+} from "@/types/api";
 import {
   cancelExportSelection,
-  getExportEntryViewModel,
   submitExportCompletion,
   submitExportSelection,
-  toggleExportSelection,
 } from "@/features/export/export-flow-logic.mjs";
+import { ExportCompletedDetail } from "./export-completed-detail";
+import { ExportOrderList } from "./export-order-list";
+import { ExportSelectionPanel } from "./export-selection-panel";
+import { ExportTabs } from "./export-tabs";
 
-type FlowStep = "select" | "preview" | "completed";
+type FlowStep = "select" | "preview" | "completed" | "completedDetail";
 type DownloadFormat = "json" | "text";
+type ExportTab = "select" | "orders";
 
 function DiarySelectionSkeleton() {
   return (
@@ -63,6 +75,36 @@ function getDownloadFilename(response: Response, fallback: string) {
   return matchedFilename ?? fallback;
 }
 
+function formatDateTime(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function getOrderViewModel(order: ExportOrderSummary) {
+  const isPreviewed = order.status === "PREVIEWED";
+  const isCompleted = order.status === "COMPLETED";
+
+  return {
+    badge: isPreviewed ? "주문 예약 단계" : isCompleted ? "주문 완료" : order.status === "CANCELLED" ? "취소됨" : "주문 신청",
+    tone: isCompleted ? "success" : isPreviewed ? "progress" : order.status === "CANCELLED" ? "waiting" : "neutral",
+    description: isPreviewed
+      ? "예약 내용을 다시 열어 주문 완료 또는 취소를 이어갈 수 있어요."
+      : isCompleted
+        ? "완료된 주문은 저장된 스냅샷을 확인하거나 삭제할 수 있어요."
+        : "현재 상태를 확인해주세요.",
+    dateLabel: formatDateTime(order.completedAt ?? order.previewedAt ?? order.createdAt) ?? "",
+  } as const;
+}
+
 async function triggerDownload(exportRequestId: number, format: DownloadFormat) {
   const response = await downloadExportOrder(exportRequestId, format);
 
@@ -82,16 +124,21 @@ async function triggerDownload(exportRequestId: number, format: DownloadFormat) 
 }
 
 export function ExportClient() {
+  const [activeTab, setActiveTab] = useState<ExportTab>("select");
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
+  const [orders, setOrders] = useState<ExportOrderSummary[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [error, setError] = useState<string>();
   const [flowStep, setFlowStep] = useState<FlowStep>("select");
   const [submitting, setSubmitting] = useState(false);
   const [downloadingFormat, setDownloadingFormat] = useState<DownloadFormat | null>(null);
+  const [deletingOrderId, setDeletingOrderId] = useState<number | null>(null);
   const [exportRequestId, setExportRequestId] = useState<number | null>(null);
   const [preview, setPreview] = useState<ExportPreviewResponse | null>(null);
   const [completedOrder, setCompletedOrder] = useState<CompleteExportResponse | null>(null);
+  const [completedDetail, setCompletedDetail] = useState<ExportOrderDetailResponse | null>(null);
 
   async function loadEntries() {
     setLoading(true);
@@ -114,6 +161,27 @@ export function ExportClient() {
   useEffect(() => {
     void loadEntries();
   }, []);
+
+  async function loadOrders() {
+    setOrdersLoading(true);
+    setError(undefined);
+
+    try {
+      const response = await getExportOrders();
+      setOrders(response.orders);
+    } catch (caught) {
+      const nextError = caught instanceof Error ? caught.message : "잠시 후 다시 시도해주세요.";
+      setError(nextError);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === "orders" && flowStep === "select") {
+      void loadOrders();
+    }
+  }, [activeTab, flowStep]);
 
   const exportableEntries = useMemo(() => entries.filter((entry) => entry.exportable), [entries]);
   const selectedCount = selectedIds.length;
@@ -150,7 +218,9 @@ export function ExportClient() {
     setExportRequestId(result.exportRequestId);
     setPreview(result.preview);
     setCompletedOrder(null);
+    setCompletedDetail(null);
     setFlowStep("preview");
+    setActiveTab("select");
     setSubmitting(false);
   }
 
@@ -185,10 +255,12 @@ export function ExportClient() {
     setExportRequestId(null);
     setPreview(null);
     setCompletedOrder(null);
+    setCompletedDetail(null);
     setFlowStep("select");
     if (mode === "reset") {
       setSelectedIds([]);
     }
+    await loadOrders();
     setSubmitting(false);
   }
 
@@ -226,8 +298,101 @@ export function ExportClient() {
     }
 
     setCompletedOrder(result.completed);
+    setCompletedDetail(null);
     setFlowStep("completed");
+    await loadOrders();
     setSubmitting(false);
+  }
+
+  async function handleResumeOrder(order: ExportOrderSummary) {
+    if (submitting) {
+      return;
+    }
+
+    setSubmitting(true);
+    setError(undefined);
+
+    try {
+      const detail = await getExportOrderDetail(order.exportRequestId);
+      if (detail.status !== "PREVIEWED" || !detail.entries) {
+        setError("이어갈 수 있는 미리보기 주문이 아니에요.");
+        setSubmitting(false);
+        return;
+      }
+
+      setExportRequestId(detail.exportRequestId);
+      setPreview({
+        exportRequestId: detail.exportRequestId,
+        status: detail.status,
+        entries: detail.entries,
+      });
+      setCompletedOrder(null);
+      setCompletedDetail(null);
+      setFlowStep("preview");
+      setActiveTab("select");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "잠시 후 다시 시도해주세요.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleViewCompletedOrder(order: ExportOrderSummary) {
+    if (submitting) {
+      return;
+    }
+
+    setSubmitting(true);
+    setError(undefined);
+
+    try {
+      const detail = await getExportOrderDetail(order.exportRequestId);
+      if (detail.status !== "COMPLETED" || !detail.entries) {
+        setError("확인할 수 있는 주문 완료 내역이 아니에요.");
+        setSubmitting(false);
+        return;
+      }
+
+      setExportRequestId(detail.exportRequestId);
+      setCompletedDetail(detail);
+      setPreview(null);
+      setCompletedOrder(null);
+      setFlowStep("completedDetail");
+      setActiveTab("orders");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "잠시 후 다시 시도해주세요.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDeleteCompletedOrder(orderId: number) {
+    if (deletingOrderId) {
+      return;
+    }
+
+    const confirmed = window.confirm("완료된 주문을 삭제할까요? 삭제한 주문은 다시 다운로드할 수 없어요.");
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingOrderId(orderId);
+    setError(undefined);
+
+    try {
+      await deleteExportOrder(orderId);
+      if (completedDetail?.exportRequestId === orderId) {
+        setCompletedDetail(null);
+        setExportRequestId(null);
+        setFlowStep("select");
+        setActiveTab("orders");
+      }
+      await loadOrders();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "잠시 후 다시 시도해주세요.");
+    } finally {
+      setDeletingOrderId(null);
+    }
   }
 
   async function handleDownload(format: DownloadFormat) {
@@ -247,14 +412,6 @@ export function ExportClient() {
     }
   }
 
-  if (loading) {
-    return <DiarySelectionSkeleton />;
-  }
-
-  if (!entries.length) {
-    return <DiaryEmptyState />;
-  }
-
   return (
     <section className="space-y-6">
       {error ? (
@@ -265,122 +422,36 @@ export function ExportClient() {
 
       {flowStep === "select" ? (
         <>
-          <section className="rounded-lg border border-stone-200 bg-white p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="space-y-2">
-                <StatusBadge tone="progress">기록 선택</StatusBadge>
-                <h2 className="text-base font-semibold text-stone-950">주문할 기록을 골라주세요.</h2>
-                <p className="text-sm leading-6 text-stone-700">
-                  두 사람의 답변이 모두 열린 기록만 주문 미리보기와 다운로드에 담을 수 있어요.
-                </p>
-              </div>
-              <div className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">
-                <p className="font-medium text-stone-900">선택한 기록 {selectedCount}개</p>
-                <p className="mt-1 text-xs text-stone-500">JSON 다운로드와 텍스트 다운로드는 주문 완료 뒤에 열려요.</p>
-              </div>
-            </div>
-          </section>
+          <ExportTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <section className="space-y-4" aria-label="주문 기록 목록">
-            {entries.map((entry) => {
-              const checked = selectedIds.includes(entry.dailyQuestionId);
-              const viewModel = getExportEntryViewModel(entry);
-
-              return (
-                <article key={entry.dailyQuestionId} className="rounded-lg border border-stone-200 bg-white p-5">
-                  <div
-                    data-testid={`export-entry-${entry.dailyQuestionId}`}
-                    role="checkbox"
-                    aria-checked={checked}
-                    aria-disabled={!entry.exportable}
-                    tabIndex={entry.exportable ? 0 : -1}
-                    className={`cursor-pointer outline-none transition-colors focus:ring-2 focus:ring-rose-100 ${
-                      entry.exportable ? "" : "cursor-not-allowed opacity-80"
-                    }`}
-                    onClick={() => {
-                      setSelectedIds((currentIds) =>
-                        toggleExportSelection(currentIds, entry.dailyQuestionId, entry.exportable),
-                      );
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === " " || event.key === "Spacebar") {
-                        event.preventDefault();
-                        setSelectedIds((currentIds) =>
-                          toggleExportSelection(currentIds, entry.dailyQuestionId, entry.exportable),
-                        );
-                      }
-                    }}
-                  >
-                    <div className="flex min-h-11 items-start gap-4">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        readOnly
-                        tabIndex={-1}
-                        aria-hidden="true"
-                        className="mt-1 h-4 w-4 rounded border-stone-300 text-rose-700 focus:ring-rose-500"
-                        disabled={!entry.exportable}
-                      />
-                      <div className="min-w-0 flex-1 space-y-4">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="space-y-2">
-                            <p className="text-xs text-stone-500">{viewModel.dateLabel}</p>
-                            <h3 className="text-base font-medium leading-7 text-stone-950">{entry.question}</h3>
-                          </div>
-                          <StatusBadge tone={viewModel.availabilityTone}>{viewModel.availabilityBadge}</StatusBadge>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <StatusBadge tone={viewModel.myAnswerTone}>{viewModel.myAnswerBadge}</StatusBadge>
-                          <StatusBadge tone={viewModel.partnerAnswerTone}>{viewModel.partnerAnswerBadge}</StatusBadge>
-                          {checked ? <StatusBadge tone="selected">선택됨</StatusBadge> : null}
-                        </div>
-                        <p className="text-sm leading-6 text-stone-700">{viewModel.availabilityDescription}</p>
-                        {entry.exportable ? (
-                          <div className="grid gap-3 md:grid-cols-2">
-                            {[entry.myAnswer, entry.partnerAnswer]
-                              .filter((answer): answer is ExportPreviewAnswer => Boolean(answer))
-                              .map((answer) => (
-                                <div
-                                  key={answer.displayName}
-                                  className="rounded-lg border border-stone-200 bg-stone-50 p-4"
-                                >
-                                  <p className="text-xs font-medium text-stone-500">{answer.displayName}</p>
-                                  <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-stone-700">
-                                    {answer.content}
-                                  </p>
-                                </div>
-                              ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </section>
-
-          <div className="sticky bottom-4 z-10">
-            <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-stone-900">선택한 기록 {selectedCount}개</p>
-                  <p className="text-sm text-stone-500">
-                    {exportableEntries.length
-                      ? "둘 다 답한 기록만 주문할 수 있어요."
-                      : "둘 다 답한 기록만 주문할 수 있어요."}
-                  </p>
-                </div>
-                <Button
-                  onClick={handleCreateOrder}
-                  disabled={!selectedCount || !exportableEntries.length || submitting}
-                  data-testid="create-export-order"
-                >
-                  {submitting ? "주문 준비 중..." : "주문 신청"}
-                </Button>
-              </div>
-            </section>
-          </div>
+          {activeTab === "orders" ? (
+            <ExportOrderList
+              orders={orders}
+              ordersLoading={ordersLoading}
+              submitting={submitting}
+              deletingOrderId={deletingOrderId}
+              onRefresh={() => void loadOrders()}
+              onResumeOrder={(order) => void handleResumeOrder(order)}
+              onViewCompletedOrder={(order) => void handleViewCompletedOrder(order)}
+              onDeleteCompletedOrder={(orderId) => void handleDeleteCompletedOrder(orderId)}
+              getOrderViewModel={getOrderViewModel}
+              skeleton={<DiarySelectionSkeleton />}
+            />
+          ) : loading ? (
+            <DiarySelectionSkeleton />
+          ) : !entries.length ? (
+            <DiaryEmptyState />
+          ) : (
+            <ExportSelectionPanel
+              entries={entries}
+              exportableEntries={exportableEntries}
+              selectedIds={selectedIds}
+              selectedCount={selectedCount}
+              submitting={submitting}
+              onCreateOrder={handleCreateOrder}
+              setSelectedIds={setSelectedIds}
+            />
+          )}
         </>
       ) : null}
 
@@ -437,6 +508,23 @@ export function ExportClient() {
         </>
       ) : null}
 
+      {flowStep === "completedDetail" && completedDetail ? (
+        <ExportCompletedDetail
+          detail={completedDetail}
+          deletingOrderId={deletingOrderId}
+          downloadingFormat={downloadingFormat}
+          onDownload={(format) => void handleDownload(format)}
+          onDelete={(orderId) => void handleDeleteCompletedOrder(orderId)}
+          onBack={() => {
+            setCompletedDetail(null);
+            setExportRequestId(null);
+            setFlowStep("select");
+            setActiveTab("orders");
+          }}
+          formatDateTime={formatDateTime}
+        />
+      ) : null}
+
       {flowStep === "completed" && completedOrder && preview ? (
         <>
           <section className="rounded-lg border border-stone-200 bg-white p-5">
@@ -475,7 +563,7 @@ export function ExportClient() {
                     <p className="text-xs text-stone-500">{entry.date}</p>
                     <h3 className="text-base font-medium leading-7 text-stone-950">{entry.question}</h3>
                   </div>
-                  <StatusBadge tone="success">다운로드 가능</StatusBadge>
+                  <StatusBadge tone="success">주문 완료</StatusBadge>
                 </div>
                 <ul className="mt-4 space-y-4">
                   {entry.answers.map((answer) => (

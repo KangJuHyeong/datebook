@@ -4,8 +4,23 @@ import type {
   CompleteExportResponse,
   CreateExportRequest,
   CreateExportResponse,
+  DeleteExportResponse,
+  ExportOrderDetailResponse,
+  ExportOrderListResponse,
   ExportPreviewResponse,
 } from "@/types/api";
+
+export function getExportOrders() {
+  return apiRequestJson<ExportOrderListResponse>("/api/exports", {
+    method: "GET",
+  });
+}
+
+export function getExportOrderDetail(exportRequestId: number) {
+  return apiRequestJson<ExportOrderDetailResponse>(`/api/exports/${exportRequestId}`, {
+    method: "GET",
+  });
+}
 
 export function createExportOrder(data: CreateExportRequest) {
   return apiRequestJson<CreateExportResponse>("/api/exports", {
@@ -29,6 +44,12 @@ export function completeExportOrder(exportRequestId: number) {
 export function cancelExportOrder(exportRequestId: number) {
   return apiRequestJson<CancelExportResponse>(`/api/exports/${exportRequestId}/cancel`, {
     method: "POST",
+  });
+}
+
+export function deleteExportOrder(exportRequestId: number) {
+  return apiRequestJson<DeleteExportResponse>(`/api/exports/${exportRequestId}`, {
+    method: "DELETE",
   });
 }
 

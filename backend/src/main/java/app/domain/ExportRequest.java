@@ -83,9 +83,10 @@ public class ExportRequest extends CreatedAtEntity {
         return textPayload;
     }
 
-    public void markPreviewed(LocalDateTime previewedAt) {
+    public void markPreviewed(LocalDateTime previewedAt, String jsonPayload) {
         this.status = ExportStatus.PREVIEWED;
         this.previewedAt = previewedAt;
+        this.jsonPayload = jsonPayload;
     }
 
     public void markCompleted(LocalDateTime completedAt, String jsonPayload, String textPayload) {
@@ -98,5 +99,7 @@ public class ExportRequest extends CreatedAtEntity {
     public void cancel(LocalDateTime cancelledAt) {
         this.status = ExportStatus.CANCELLED;
         this.cancelledAt = cancelledAt;
+        this.jsonPayload = null;
+        this.textPayload = null;
     }
 }

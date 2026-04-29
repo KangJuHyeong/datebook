@@ -26,7 +26,11 @@ import app.dto.export.CancelExportResponse;
 import app.dto.export.CompleteExportResponse;
 import app.dto.export.CreateExportRequest;
 import app.dto.export.CreateExportResponse;
+import app.dto.export.DeleteExportResponse;
 import app.dto.export.ExportDownloadLinkResponse;
+import app.dto.export.ExportOrderDetailResponse;
+import app.dto.export.ExportOrderListResponse;
+import app.dto.export.ExportOrderSummaryResponse;
 import app.dto.export.ExportPreviewAnswerResponse;
 import app.dto.export.ExportPreviewEntryResponse;
 import app.dto.export.ExportPreviewResponse;
@@ -93,6 +97,46 @@ public class ExportService {
         return new CreateExportResponse(exportRequest.getId(), exportRequest.getStatus(), dailyQuestions.size());
     }
 
+    public ExportOrderListResponse listExports(HttpSession session) {
+        CoupleMember coupleMember = getAuthenticatedCoupleMember(session);
+        List<ExportRequest> exportRequests = exportRequestRepository.findAllByCouple_IdAndStatusInOrderByCreatedAtDesc(
+                coupleMember.getCouple().getId(),
+                List.of(ExportStatus.PREVIEWED, ExportStatus.COMPLETED)
+        );
+        Map<Long, Integer> itemCountsByExportRequestId = loadItemCounts(exportRequests);
+        List<ExportOrderSummaryResponse> orders = exportRequests.stream()
+                .map(exportRequest -> toOrderSummary(exportRequest, itemCountsByExportRequestId))
+                .toList();
+
+        return new ExportOrderListResponse(orders);
+    }
+
+    public ExportOrderDetailResponse getExport(Long exportRequestId, HttpSession session) {
+        CoupleMember coupleMember = getAuthenticatedCoupleMember(session);
+        ExportRequest exportRequest = getOwnedExportRequest(exportRequestId, coupleMember);
+        List<ExportPreviewEntryResponse> entries = null;
+        List<ExportDownloadLinkResponse> downloads = List.of();
+
+        if (exportRequest.getStatus() == ExportStatus.PREVIEWED) {
+            entries = readSnapshotEntries(exportRequest);
+        } else if (exportRequest.getStatus() == ExportStatus.COMPLETED) {
+            entries = readSnapshotEntries(exportRequest);
+            downloads = buildDownloadLinks(exportRequest);
+        }
+
+        return new ExportOrderDetailResponse(
+                exportRequest.getId(),
+                exportRequest.getStatus(),
+                exportItemRepository.countByExportRequest_Id(exportRequest.getId()),
+                exportRequest.getCreatedAt(),
+                exportRequest.getPreviewedAt(),
+                exportRequest.getCompletedAt(),
+                exportRequest.getCancelledAt(),
+                entries,
+                downloads
+        );
+    }
+
     @Transactional
     public ExportPreviewResponse previewExport(Long exportRequestId, HttpSession session) {
         CoupleMember coupleMember = getAuthenticatedCoupleMember(session);
@@ -102,7 +146,8 @@ public class ExportService {
         }
 
         List<ExportPreviewEntryResponse> entries = buildPreviewEntries(exportRequest, coupleMember.getCouple().getId());
-        exportRequest.markPreviewed(appTimeProvider.nowUtcDateTime());
+        LocalDateTime previewedAt = appTimeProvider.nowUtcDateTime();
+        exportRequest.markPreviewed(previewedAt, buildJsonPayload(exportRequest, entries, previewedAt));
 
         return new ExportPreviewResponse(exportRequest.getId(), exportRequest.getStatus(), entries);
     }
@@ -115,7 +160,7 @@ public class ExportService {
             throw new BusinessException(ErrorCode.EXPORT_STATE_INVALID);
         }
 
-        List<ExportPreviewEntryResponse> entries = buildPreviewEntries(exportRequest, coupleMember.getCouple().getId());
+        List<ExportPreviewEntryResponse> entries = readSnapshotEntries(exportRequest);
         LocalDateTime completedAt = appTimeProvider.nowUtcDateTime();
         String jsonPayload = buildJsonPayload(exportRequest, entries, completedAt);
         String textPayload = buildTextPayload(entries);
@@ -126,10 +171,7 @@ public class ExportService {
                 exportRequest.getId(),
                 exportRequest.getStatus(),
                 exportRequest.getCompletedAt(),
-                List.of(
-                        new ExportDownloadLinkResponse("json", "/api/exports/%d/download?format=json".formatted(exportRequest.getId())),
-                        new ExportDownloadLinkResponse("text", "/api/exports/%d/download?format=text".formatted(exportRequest.getId()))
-                )
+                buildDownloadLinks(exportRequest)
         );
     }
 
@@ -143,6 +185,19 @@ public class ExportService {
 
         exportRequest.cancel(appTimeProvider.nowUtcDateTime());
         return new CancelExportResponse(exportRequest.getId(), exportRequest.getStatus());
+    }
+
+    @Transactional
+    public DeleteExportResponse deleteExport(Long exportRequestId, HttpSession session) {
+        CoupleMember coupleMember = getAuthenticatedCoupleMember(session);
+        ExportRequest exportRequest = getOwnedExportRequest(exportRequestId, coupleMember);
+        if (exportRequest.getStatus() != ExportStatus.COMPLETED) {
+            throw new BusinessException(ErrorCode.EXPORT_STATE_INVALID);
+        }
+
+        exportItemRepository.deleteAllByExportRequest_Id(exportRequest.getId());
+        exportRequestRepository.delete(exportRequest);
+        return new DeleteExportResponse(exportRequest.getId(), true);
     }
 
     public DownloadPayload downloadExport(Long exportRequestId, String format, HttpSession session) {
@@ -213,14 +268,54 @@ public class ExportService {
     }
 
     private ExportRequest getOwnedExportRequest(Long exportRequestId, CoupleMember coupleMember) {
-        return exportRequestRepository.findById(exportRequestId)
-                .map(exportRequest -> {
-                    if (!exportRequest.getCouple().getId().equals(coupleMember.getCouple().getId())) {
-                        throw new BusinessException(ErrorCode.FORBIDDEN);
-                    }
-                    return exportRequest;
-                })
+        return exportRequestRepository.findByIdAndCouple_Id(exportRequestId, coupleMember.getCouple().getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    }
+
+    private Map<Long, Integer> loadItemCounts(List<ExportRequest> exportRequests) {
+        List<Long> exportRequestIds = exportRequests.stream()
+                .map(ExportRequest::getId)
+                .toList();
+        if (exportRequestIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return exportItemRepository.countByExportRequestIds(exportRequestIds).stream()
+                .collect(Collectors.toMap(
+                        ExportItemRepository.ExportItemCount::getExportRequestId,
+                        count -> count.getItemCount().intValue()
+                ));
+    }
+
+    private ExportOrderSummaryResponse toOrderSummary(
+            ExportRequest exportRequest,
+            Map<Long, Integer> itemCountsByExportRequestId
+    ) {
+        return new ExportOrderSummaryResponse(
+                exportRequest.getId(),
+                exportRequest.getStatus(),
+                itemCountsByExportRequestId.getOrDefault(exportRequest.getId(), 0),
+                exportRequest.getCreatedAt(),
+                exportRequest.getPreviewedAt(),
+                exportRequest.getCompletedAt(),
+                exportRequest.getCancelledAt()
+        );
+    }
+
+    private List<ExportDownloadLinkResponse> buildDownloadLinks(ExportRequest exportRequest) {
+        return List.of(
+                new ExportDownloadLinkResponse("json", "/api/exports/%d/download?format=json".formatted(exportRequest.getId())),
+                new ExportDownloadLinkResponse("text", "/api/exports/%d/download?format=text".formatted(exportRequest.getId()))
+        );
+    }
+
+    private List<ExportPreviewEntryResponse> readSnapshotEntries(ExportRequest exportRequest) {
+        try {
+            ExportSnapshotPayload payload = objectMapper.readValue(exportRequest.getJsonPayload(), ExportSnapshotPayload.class);
+            return payload.entries();
+        } catch (JsonProcessingException | IllegalArgumentException exception) {
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR);
+        }
     }
 
     private List<ExportPreviewEntryResponse> buildPreviewEntries(ExportRequest exportRequest, Long coupleId) {

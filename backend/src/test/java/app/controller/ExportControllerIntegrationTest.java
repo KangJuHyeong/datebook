@@ -1,6 +1,7 @@
 package app.controller;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -151,16 +152,49 @@ class ExportControllerIntegrationTest {
                 .andExpect(jsonPath("$.entries[0].date").value("2026-04-22"))
                 .andExpect(jsonPath("$.entries[1].date").value("2026-04-23"));
 
+        mockMvc.perform(get("/api/exports")
+                        .session(authenticatedSession(me.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orders[0].exportRequestId").value(exportRequestId))
+                .andExpect(jsonPath("$.orders[0].status").value("PREVIEWED"))
+                .andExpect(jsonPath("$.orders[0].itemCount").value(2));
+
+        mockMvc.perform(get("/api/exports/{exportRequestId}", exportRequestId)
+                        .session(authenticatedSession(me.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PREVIEWED"))
+                .andExpect(jsonPath("$.entries[0].question").value("첫 질문"))
+                .andExpect(jsonPath("$.downloads").isEmpty());
+
         mockMvc.perform(get("/api/exports/{exportRequestId}/download", exportRequestId)
                         .session(authenticatedSession(me.getId()))
                         .param("format", "json"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("EXPORT_NOT_COMPLETED"));
 
+        mockMvc.perform(put("/api/answers/{answerId}", mySecondAnswer.getId())
+                        .session(authenticatedSession(me.getId()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "content": "미리보기 후 완료 전 수정한 답변"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
         mockMvc.perform(post("/api/exports/{exportRequestId}/complete", exportRequestId)
                         .session(authenticatedSession(me.getId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.downloads[0].format").value("json"))
+                .andExpect(jsonPath("$.downloads[1].format").value("text"));
+
+        mockMvc.perform(get("/api/exports/{exportRequestId}", exportRequestId)
+                        .session(authenticatedSession(me.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.entries[0].question").value("첫 질문"))
+                .andExpect(jsonPath("$.entries[1].answers[0].content").value("둘째 내 답변"))
                 .andExpect(jsonPath("$.downloads[0].format").value("json"))
                 .andExpect(jsonPath("$.downloads[1].format").value("text"));
 
@@ -182,6 +216,7 @@ class ExportControllerIntegrationTest {
                 .andExpect(header().string("Content-Type", "text/plain; charset=UTF-8"))
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"couple-diary-%d.txt\"".formatted(exportRequestId)))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("둘째 내 답변")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("미리보기 후 완료 전 수정한 답변"))))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -207,6 +242,22 @@ class ExportControllerIntegrationTest {
                         .param("format", "text"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(textBeforeUpdate));
+
+        mockMvc.perform(get("/api/exports/{exportRequestId}", exportRequestId)
+                        .session(authenticatedSession(me.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.entries[1].answers[0].content").value("둘째 내 답변"));
+
+        mockMvc.perform(delete("/api/exports/{exportRequestId}", exportRequestId)
+                        .session(authenticatedSession(me.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.exportRequestId").value(exportRequestId))
+                .andExpect(jsonPath("$.deleted").value(true));
+
+        mockMvc.perform(get("/api/exports/{exportRequestId}", exportRequestId)
+                        .session(authenticatedSession(me.getId())))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 
     @Test

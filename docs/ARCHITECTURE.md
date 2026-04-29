@@ -261,23 +261,29 @@ backend/
 → 저장된 payload 다운로드
 ```
 
+주문 내역은 `/export` 화면의 주문 내역 탭에서 조회한다. 기본 목록은 `PREVIEWED`, `COMPLETED` 주문을 생성일 내림차순으로 보여준다. `PREVIEWED` 주문은 "주문 예약 단계"로 표시하고 기존 ExportItem 기준으로 미리보기를 다시 열어 완료 또는 취소를 이어갈 수 있다. `COMPLETED` 주문은 "주문 완료"로 표시하고 저장된 payload에서 복원한 스냅샷 상세, 다운로드, 삭제를 제공한다.
+
 ## 주문 상태 전이
 - REQUESTED → PREVIEWED
 - PREVIEWED → COMPLETED
 - REQUESTED → CANCELLED
 - PREVIEWED → CANCELLED
-- COMPLETED는 최종 상태이며 취소하거나 항목을 바꾸지 않는다.
+- COMPLETED는 최종 상태이며 취소하거나 항목을 바꾸지 않는다. 완료 주문은 주문 내역에서 삭제할 수 있다.
 - CANCELLED는 최종 상태이며 다운로드할 수 없다.
 
 ## 주문 API 방향
 - POST /api/exports: 선택한 dailyQuestionIds로 주문 신청을 생성한다.
+- GET /api/exports: 현재 커플의 진행 중 미리보기 주문과 완료된 주문 목록을 생성일 내림차순으로 반환한다.
+- GET /api/exports/{exportRequestId}: 현재 커플의 주문 상세를 반환한다. PREVIEWED는 미리보기 entries, COMPLETED는 저장된 JSON payload에서 복원한 entries와 다운로드 링크를 제공한다.
 - POST /api/exports/{exportRequestId}/preview: 주문 확인 전 미리보기 데이터를 생성하고 주문 상태를 PREVIEWED로 바꾼다.
 - POST /api/exports/{exportRequestId}/complete: 주문을 완료 상태로 바꾸고 JSON/text payload 스냅샷을 저장한다.
 - POST /api/exports/{exportRequestId}/cancel: REQUESTED 또는 PREVIEWED 주문을 취소한다.
+- DELETE /api/exports/{exportRequestId}: 현재 커플의 COMPLETED 주문을 삭제한다. PREVIEWED 주문은 cancel API를 사용한다.
 - GET /api/exports/{exportRequestId}/download?format=json: 완료된 주문의 JSON 파일을 반환한다.
 - GET /api/exports/{exportRequestId}/download?format=text: 완료된 주문의 text 파일을 반환한다.
 - 미리보기와 다운로드는 현재 세션 사용자가 속한 커플의 주문에만 허용한다.
-- 다운로드 API는 COMPLETED 상태의 주문에만 허용한다.
+- 주문 목록과 상세 조회도 현재 세션 사용자가 속한 커플의 주문에만 허용한다.
+- 다운로드와 삭제 API는 COMPLETED 상태의 주문에만 허용한다.
 
 ## 에러 처리 전략
 ### 공통 원칙
@@ -570,6 +576,90 @@ Response:
 }
 ```
 
+### GET /api/exports
+Response:
+```json
+{
+  "orders": [
+    {
+      "exportRequestId": 300,
+      "status": "PREVIEWED",
+      "itemCount": 2,
+      "createdAt": "2026-04-22T09:50:00",
+      "previewedAt": "2026-04-22T09:51:00",
+      "completedAt": null,
+      "cancelledAt": null
+    }
+  ]
+}
+```
+
+### GET /api/exports/{exportRequestId}
+PREVIEWED Response:
+```json
+{
+  "exportRequestId": 300,
+  "status": "PREVIEWED",
+  "itemCount": 2,
+  "createdAt": "2026-04-22T09:50:00",
+  "previewedAt": "2026-04-22T09:51:00",
+  "completedAt": null,
+  "cancelledAt": null,
+  "entries": [
+    {
+      "date": "2026-04-22",
+      "question": "오늘 가장 먼저 떠오른 서로의 모습은 무엇인가요?",
+      "answers": [
+        {
+          "displayName": "민지",
+          "content": "아침에 보내준 짧은 메시지가 생각났어."
+        }
+      ]
+    }
+  ],
+  "downloads": []
+}
+```
+
+COMPLETED Response:
+```json
+{
+  "exportRequestId": 300,
+  "status": "COMPLETED",
+  "itemCount": 2,
+  "createdAt": "2026-04-22T09:50:00",
+  "previewedAt": "2026-04-22T09:51:00",
+  "completedAt": "2026-04-22T10:00:00",
+  "cancelledAt": null,
+  "entries": [
+    {
+      "date": "2026-04-22",
+      "question": "오늘 가장 먼저 떠오른 서로의 모습은 무엇인가요?",
+      "answers": [
+        {
+          "displayName": "민지",
+          "content": "아침에 보내준 짧은 메시지가 생각났어."
+        },
+        {
+          "displayName": "도윤",
+          "content": "퇴근길에 같이 걷던 장면."
+        }
+      ]
+    }
+  ],
+  "downloads": [
+    {
+      "format": "json",
+      "url": "/api/exports/300/download?format=json"
+    },
+    {
+      "format": "text",
+      "url": "/api/exports/300/download?format=text"
+    }
+  ]
+}
+```
+
 ### POST /api/exports/{exportRequestId}/preview
 Response:
 ```json
@@ -621,6 +711,15 @@ Response:
 {
   "exportRequestId": 300,
   "status": "CANCELLED"
+}
+```
+
+### DELETE /api/exports/{exportRequestId}
+Response:
+```json
+{
+  "exportRequestId": 300,
+  "deleted": true
 }
 ```
 
@@ -678,7 +777,7 @@ Q. 오늘 가장 먼저 떠오른 서로의 모습은 무엇인가요?
 ## 상태 관리
 - 서버 상태는 Spring Boot API 응답을 기준으로 한다.
 - Frontend 전역 상태는 최소화하고 인증 확인은 GET /api/auth/me 응답을 사용한다.
-- 답변 작성 폼, export 체크 목록, 주문 미리보기 단계 같은 화면 내부 상태는 useState 또는 useReducer로 관리한다.
+- 답변 작성 폼, export 체크 목록, 주문 내역 탭, 주문 미리보기 단계 같은 화면 내부 상태는 useState 또는 useReducer로 관리한다.
 - 답변 작성 폼은 자동 저장하지 않는다. 저장 전 dirty 상태에서 이탈하려 하면 확인 UI를 표시한다.
 - API 요청 중 동일 액션 버튼은 disabled 처리한다.
 - 캐싱이 필요해지면 TanStack Query 도입을 검토하되 MVP 기본 범위에는 포함하지 않는다.

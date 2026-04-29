@@ -1,16 +1,12 @@
 plugins {
     id 'java'
     id 'application'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
 }
 
 group = 'app'
 version = '0.0.1-SNAPSHOT'
-
-def gradleCacheDir = file("${System.getenv('USERPROFILE')}\\.gradle\\caches\\modules-2\\files-2.1")
-def gradleCacheJars = fileTree(gradleCacheDir) {
-    include '**/*.jar'
-    exclude '**/slf4j-api/1.7.36/**'
-}
 
 java {
     toolchain {
@@ -25,8 +21,16 @@ configurations {
 }
 
 dependencies {
-    implementation gradleCacheJars
-    testImplementation gradleCacheJars
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'com.h2database:h2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 application {

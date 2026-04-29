@@ -125,12 +125,48 @@ await runTest("submitExportCompletion and cancelExportSelection surface API stat
 
 await runTest("export client source supports disabled locked rows and completion-only downloads", async () => {
   const source = await readFile(new URL("../src/app/export/export-client.tsx", import.meta.url), "utf8");
-  assert.match(source, /role="checkbox"/);
-  assert.match(source, /aria-disabled=\{!entry\.exportable\}/);
-  assert.match(source, /event\.key === " " \|\| event\.key === "Spacebar"/);
+  const selectionSource = await readFile(new URL("../src/app/export/export-selection-panel.tsx", import.meta.url), "utf8");
+  const orderListSource = await readFile(new URL("../src/app/export/export-order-list.tsx", import.meta.url), "utf8");
+  const completedDetailSource = await readFile(new URL("../src/app/export/export-completed-detail.tsx", import.meta.url), "utf8");
+  const combinedSource = [source, selectionSource, orderListSource, completedDetailSource].join("\n");
+
+  assert.match(selectionSource, /role="checkbox"/);
+  assert.match(selectionSource, /aria-disabled=\{!entry\.exportable\}/);
+  assert.match(selectionSource, /event\.key === " " \|\| event\.key === "Spacebar"/);
+  assert.match(combinedSource, /주문 내역/);
+  assert.match(combinedSource, /주문 예약 단계/);
+  assert.match(combinedSource, /주문 완료/);
+  assert.match(orderListSource, /예약 내용 보기/);
+  assert.match(orderListSource, /주문 내용 보기/);
   assert.match(source, /flowStep === "completed" && completedOrder && preview/);
-  assert.match(source, /JSON 다운로드/);
-  assert.match(source, /텍스트 다운로드/);
+  assert.match(source, /flowStep === "completedDetail" && completedDetail/);
+  assert.match(completedDetailSource, /저장된 주문 내용을 확인해요/);
+  assert.match(source, /handleViewCompletedOrder/);
+  assert.match(source, /handleDeleteCompletedOrder/);
+  assert.doesNotMatch(combinedSource, /handleDownloadFromOrder/);
+  assert.match(combinedSource, /JSON 다운로드/);
+  assert.match(combinedSource, /텍스트 다운로드/);
+});
+
+await runTest("export client keeps order history available when diary entries are empty", async () => {
+  const source = await readFile(new URL("../src/app/export/export-client.tsx", import.meta.url), "utf8");
+
+  assert.doesNotMatch(source, /if \(!entries\.length\)\s*\{\s*return <DiaryEmptyState \/>;\s*\}/);
+  assert.match(source, /<ExportTabs activeTab=\{activeTab\} onTabChange=\{setActiveTab\} \/>/);
+  assert.match(source, /!entries\.length \? \(\s*<DiaryEmptyState \/>/);
+});
+
+await runTest("export API client exposes order history and detail reads", async () => {
+  const source = await readFile(new URL("../src/lib/api/export.ts", import.meta.url), "utf8");
+  const routeSource = await readFile(new URL("../src/app/api/exports/route.ts", import.meta.url), "utf8");
+  const detailRouteSource = await readFile(new URL("../src/app/api/exports/[exportRequestId]/route.ts", import.meta.url), "utf8");
+
+  assert.match(source, /getExportOrders/);
+  assert.match(source, /getExportOrderDetail/);
+  assert.match(source, /deleteExportOrder/);
+  assert.match(routeSource, /export function GET/);
+  assert.match(detailRouteSource, /export async function GET/);
+  assert.match(detailRouteSource, /export async function DELETE/);
 });
 
 await runTest("order-facing page copy does not use placeholder text", async () => {

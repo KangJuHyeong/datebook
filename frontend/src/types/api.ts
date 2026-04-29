@@ -146,6 +146,20 @@ export type CreateExportResponse = {
   itemCount: number;
 };
 
+export type ExportOrderSummary = {
+  exportRequestId: number;
+  status: ExportStatus;
+  itemCount: number;
+  createdAt: string;
+  previewedAt: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+};
+
+export type ExportOrderListResponse = {
+  orders: ExportOrderSummary[];
+};
+
 export type ExportPreviewAnswer = {
   displayName: string;
   content: string;
@@ -178,4 +192,21 @@ export type CompleteExportResponse = {
 export type CancelExportResponse = {
   exportRequestId: number;
   status: ExportStatus;
+};
+
+export type DeleteExportResponse = {
+  exportRequestId: number;
+  deleted: boolean;
+};
+
+export type ExportOrderDetailResponse = {
+  exportRequestId: number;
+  status: ExportStatus;
+  itemCount: number;
+  createdAt: string;
+  previewedAt: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  entries: ExportPreviewEntry[] | null;
+  downloads: ExportDownloadLink[];
 };
