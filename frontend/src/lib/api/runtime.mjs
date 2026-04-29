@@ -76,10 +76,7 @@ async function ensureCsrfHeader(headers, method, customFetch) {
     return;
   }
 
-  let token = readCookie(CSRF_COOKIE_NAME);
-  if (!token) {
-    token = await fetchCsrfToken(customFetch);
-  }
+  const token = await fetchCsrfToken(customFetch) ?? readCookie(CSRF_COOKIE_NAME);
 
   if (token) {
     headers.set(CSRF_HEADER_NAME, token);

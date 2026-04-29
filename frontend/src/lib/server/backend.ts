@@ -23,12 +23,25 @@ function buildForwardHeaders(request: NextRequest) {
 
 function buildResponseHeaders(response: Response) {
   const headers = new Headers();
-  const allowedResponseHeaders = ["content-type", "content-disposition", "set-cookie", "cache-control"];
+  const allowedResponseHeaders = ["content-type", "content-disposition", "cache-control"];
 
   for (const headerName of allowedResponseHeaders) {
     const value = response.headers.get(headerName);
     if (value) {
       headers.set(headerName, value);
+    }
+  }
+
+  const responseHeaders = response.headers as Headers & { getSetCookie?: () => string[] };
+  const setCookies = responseHeaders.getSetCookie?.() ?? [];
+  if (setCookies.length) {
+    for (const cookie of setCookies) {
+      headers.append("set-cookie", cookie);
+    }
+  } else {
+    const setCookie = response.headers.get("set-cookie");
+    if (setCookie) {
+      headers.set("set-cookie", setCookie);
     }
   }
 

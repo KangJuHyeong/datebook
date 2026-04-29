@@ -127,6 +127,40 @@ await runTest("apiRequestJson fetches and sends CSRF token for browser mutations
   }
 });
 
+await runTest("apiRequestJson refreshes CSRF token even when cookie exists", async () => {
+  globalThis.window = {};
+  globalThis.document = { cookie: "XSRF-TOKEN=stale-token" };
+
+  try {
+    const calls = [];
+    const mockFetch = async (url, init) => {
+      calls.push({ url, init });
+      if (url === "/api/auth/csrf") {
+        return new Response(JSON.stringify({ token: "fresh-token" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    };
+
+    await apiRequestJson("/api/exports", {
+      method: "POST",
+      body: JSON.stringify({ dailyQuestionIds: [1] }),
+    }, mockFetch);
+
+    assert.equal(calls[0].url, "/api/auth/csrf");
+    assert.equal(calls[1].init.headers.get("X-XSRF-TOKEN"), "fresh-token");
+  } finally {
+    delete globalThis.window;
+    delete globalThis.document;
+  }
+});
+
 await runTest("apiRequestJson normalizes non-JSON error responses", async () => {
   const mockFetch = async () =>
     new Response("<html>bad gateway</html>", {
