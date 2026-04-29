@@ -190,11 +190,10 @@ backend/
 
 | AI 도구 | 활용 내용 |
 | --- | --- |
-| Codex | 프로젝트 문서 정리, README 작성, 구현 구조 점검 |
-| ChatGPT 계열 도구 | 서비스 아이디어 구체화, PRD/아키텍처 초안 작성, 테스트 케이스 관점 정리 |
-| AI 코드 작성 도구 | Spring Boot service/controller, Next.js 화면, BFF route handler, 테스트 코드 작성 보조 |
+| Codex | AI 코드 작성 도구로 사용. Spring Boot service/controller, Next.js 화면, BFF route handler, 테스트 코드 작성 보조와 구현 구조 점검, README/docs/AGENTS.md 기반 요구사항 구체화에 활용 |
+| ChatGPT 계열 도구 | 서비스 아이디어 구체화, PRD 초안 작성, 아키텍처 초안 작성에 활용 |
 
-AI 도구는 전체 방향을 대신 결정하게 하기보다, 요구사항을 쪼개고 반복 구현 속도를 높이는 방식으로 사용했습니다. 특히 답변 동시 공개, 주문 상태 전이, 주문 데이터 스냅샷처럼 실수하면 서비스 신뢰에 영향을 주는 부분은 문서화된 규칙과 테스트를 기준으로 확인했습니다.
+AI 도구는 런타임 기능으로 제품에 포함하지 않고, 문서화와 설계 정리, 구현 보조를 위해 사용했습니다. 특히 답변 동시 공개, 주문 상태 전이, 주문 데이터 스냅샷처럼 실수하면 서비스 신뢰에 영향을 주는 부분은 `AGENTS.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/ADR.md`의 규칙을 기준으로 요구사항을 구체화하고 구현을 검토했습니다.
 
 ## 6. 설계 의도
 
